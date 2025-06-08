@@ -505,11 +505,11 @@
 
   <!-- SCRIPT MOVED TO THE END OF BODY -->
   <script>
+    // This will now run after the #currentYear element is loaded
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
     var vapiInstance = null;
-    // This is our single source of truth for the ID
-    var currentCallId = null; 
+    var currentCallId = null; // Add variable to store the call ID
     const apiKey = "58f89212-0e94-4123-8f9e-3bc0dde56fe0";
     const vapiSquadId = "541e48cf-1f4a-423b-875f-889c6917a56d";
 
@@ -534,25 +534,6 @@
         const closeBagiraModalBtn = document.getElementById("closeBagiraModal");
         const phoneClientInput = document.getElementById("phoneInput");
         const bagiraModalHeader = document.getElementById("bagiraModalHeader");
-        
-        // --- NEW AND CORRECTED LOGIC FOR GETTING THE ID ---
-        vapiInstance.on('call-start', () => {
-          console.log("--- VAPI CALL-START EVENT FIRED ---");
-          // The event is empty, so we immediately ask the instance for the ID.
-          const id = vapiInstance.getCallId();
-          if (id) {
-            currentCallId = id;
-            console.log("SUCCESS: Saved call ID:", currentCallId);
-          } else {
-            console.error("FAILURE: getCallId() returned null even after call-start.");
-          }
-        });
-        
-        // Good practice: clear the ID when the call ends.
-        vapiInstance.on('call-end', () => {
-          console.log("Call has ended. Clearing stored ID.");
-          currentCallId = null;
-        });
 
         vapiInstance.on("message", (message) => {
           if (message.type === "transcript" && message.role === "assistant" && message.transcriptType === "final" && message.transcript) {
@@ -569,20 +550,35 @@
           }
         });
 
+        // --- MODIFIED TO DEBUG ---
+        vapiInstance.on('call-start', (message) => {
+          console.log("--- VAPI CALL-START EVENT FIRED ---");
+          console.log("Full message object received:", message); // This will show us the object structure
+
+          if (message && message.id) { // TRYING A NEW PATH: message.id
+            currentCallId = message.id;
+            console.log("Saved call ID:", currentCallId);
+          } else if (message && message.call && message.call.id) { // TRYING THE OLD PATH
+            currentCallId = message.call.id;
+            console.log("Saved call ID:", currentCallId);
+          } else {
+            console.error("Could not find call ID in the message object.");
+          }
+        });
+
         if(closeBagiraModalBtn) { 
             closeBagiraModalBtn.addEventListener("click", () => { bagiraModal.style.display = "none"; });
         }
 
         if(bagiraClientForm) { 
-            // --- NEW AND CORRECTED SUBMIT LOGIC ---
             bagiraClientForm.addEventListener("submit", function(e) {
               e.preventDefault();
 
-              // Check our stored variable, NOT by calling getCallId() again.
-              if (!currentCallId) {
+              const callId = vapiInstance.getCallId();
+              if (!callId) {
                 alert("Ошибка: Не удалось получить ID звонка. Пожалуйста, попробуйте снова.");
-                console.error("Form submitted but currentCallId is null.");
-                return; 
+                console.error("VAPI callId is null or undefined. Cannot submit form.");
+                return; // Stop the submission
               }
 
               const phone = phoneClientInput.value;
@@ -592,11 +588,11 @@
               submitButton.disabled = true;
               submitButton.textContent = "Отправка...";
 
+              // UPDATED: Webhook URL reverted
               fetch("https://primary-production-3672.up.railway.app/webhook/bagira-submit", {
                 method: "POST", 
                 headers: { "Content-Type": "application/json" }, 
-                // Use the stored variable here
-                body: JSON.stringify({ phone, email, call_id: currentCallId })
+                body: JSON.stringify({ phone, email, call_id: callId })
               })
               .then(response => {
                 if (response.ok) { alert("Спасибо! Мы скоро направим информацию по указанному номеру телефона или почте"); }
