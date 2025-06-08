@@ -508,7 +508,8 @@
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
     var vapiInstance = null;
-    var currentCallId = null;
+    // This is our single source of truth for the ID
+    var currentCallId = null; 
     const apiKey = "58f89212-0e94-4123-8f9e-3bc0dde56fe0";
     const vapiSquadId = "541e48cf-1f4a-423b-875f-889c6917a56d";
 
@@ -534,8 +535,10 @@
         const phoneClientInput = document.getElementById("phoneInput");
         const bagiraModalHeader = document.getElementById("bagiraModalHeader");
         
+        // --- NEW AND CORRECTED LOGIC FOR GETTING THE ID ---
         vapiInstance.on('call-start', () => {
           console.log("--- VAPI CALL-START EVENT FIRED ---");
+          // The event is empty, so we immediately ask the instance for the ID.
           const id = vapiInstance.getCallId();
           if (id) {
             currentCallId = id;
@@ -545,6 +548,7 @@
           }
         });
         
+        // Good practice: clear the ID when the call ends.
         vapiInstance.on('call-end', () => {
           console.log("Call has ended. Clearing stored ID.");
           currentCallId = null;
@@ -570,9 +574,11 @@
         }
 
         if(bagiraClientForm) { 
+            // --- NEW AND CORRECTED SUBMIT LOGIC ---
             bagiraClientForm.addEventListener("submit", function(e) {
               e.preventDefault();
 
+              // Check our stored variable, NOT by calling getCallId() again.
               if (!currentCallId) {
                 alert("Ошибка: Не удалось получить ID звонка. Пожалуйста, попробуйте снова.");
                 console.error("Form submitted but currentCallId is null.");
@@ -589,6 +595,7 @@
               fetch("https://primary-production-3672.up.railway.app/webhook/bagira-submit", {
                 method: "POST", 
                 headers: { "Content-Type": "application/json" }, 
+                // Use the stored variable here
                 body: JSON.stringify({ phone, email, call_id: currentCallId })
               })
               .then(response => {
