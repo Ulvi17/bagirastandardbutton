@@ -509,6 +509,7 @@
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
     var vapiInstance = null;
+    var currentCallId = null; // Add variable to store the call ID
     const apiKey = "58f89212-0e94-4123-8f9e-3bc0dde56fe0";
     const vapiSquadId = "541e48cf-1f4a-423b-875f-889c6917a56d";
 
@@ -546,6 +547,22 @@
                 bagiraModalHeader.textContent = "Пожалуйста, введите ваш телефон и email для подтверждения записи.";
               }
             }
+          }
+        });
+
+        // --- MODIFIED TO DEBUG ---
+        vapiInstance.on('call-start', (message) => {
+          console.log("--- VAPI CALL-START EVENT FIRED ---");
+          console.log("Full message object received:", message); // This will show us the object structure
+
+          if (message && message.id) { // TRYING A NEW PATH: message.id
+            currentCallId = message.id;
+            console.log("Saved call ID:", currentCallId);
+          } else if (message && message.call && message.call.id) { // TRYING THE OLD PATH
+            currentCallId = message.call.id;
+            console.log("Saved call ID:", currentCallId);
+          } else {
+            console.error("Could not find call ID in the message object.");
           }
         });
 
