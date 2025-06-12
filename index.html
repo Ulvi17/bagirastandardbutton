@@ -509,7 +509,7 @@
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
     var vapiInstance = null;
-    var currentCallId = null; // Add variable to store the call ID
+    var currentWebhookUrl = null; // Variable to store the webhook URL
     const apiKey = "58f89212-0e94-4123-8f9e-3bc0dde56fe0";
     const vapiSquadId = "541e48cf-1f4a-423b-875f-889c6917a56d";
 
@@ -536,6 +536,30 @@
         const bagiraModalHeader = document.getElementById("bagiraModalHeader");
 
         vapiInstance.on("message", (message) => {
+          console.log("--- VAPI MESSAGE EVENT ---", message); // Debug all messages
+          
+          // Check for webhookUrl in the message
+          if (message && message.webhookUrl) {
+            currentWebhookUrl = message.webhookUrl;
+            console.log("Captured webhookUrl:", currentWebhookUrl);
+          }
+          
+          // Also check nested structures for webhookUrl
+          if (message && message.data && message.data.webhookUrl) {
+            currentWebhookUrl = message.data.webhookUrl;
+            console.log("Captured webhookUrl from data:", currentWebhookUrl);
+          }
+          
+          // Check if webhookUrl is in any array elements
+          if (message && Array.isArray(message)) {
+            message.forEach(item => {
+              if (item && item.webhookUrl) {
+                currentWebhookUrl = item.webhookUrl;
+                console.log("Captured webhookUrl from array:", currentWebhookUrl);
+              }
+            });
+          }
+
           if (message.type === "transcript" && message.role === "assistant" && message.transcriptType === "final" && message.transcript) {
             const assistantUtterance = message.transcript.toLowerCase().trim();
             const coreTriggerPhrase = "please type your phone number below to confirm."; 
@@ -550,19 +574,19 @@
           }
         });
 
-        // --- MODIFIED TO DEBUG ---
-        vapiInstance.on('call-start', (message) => {
-          console.log("--- VAPI CALL-START EVENT FIRED ---");
-          console.log("Full message object received:", message); // This will show us the object structure
-
-          if (message && message.id) { // TRYING A NEW PATH: message.id
-            currentCallId = message.id;
-            console.log("Saved call ID:", currentCallId);
-          } else if (message && message.call && message.call.id) { // TRYING THE OLD PATH
-            currentCallId = message.call.id;
-            console.log("Saved call ID:", currentCallId);
-          } else {
-            console.error("Could not find call ID in the message object.");
+        // Listen to ALL VAPI events to find where webhookUrl appears
+        vapiInstance.on('*', (eventName, message) => {
+          if (message && typeof message === 'object') {
+            const messageStr = JSON.stringify(message);
+            if (messageStr.includes('webhookUrl')) {
+              console.log(`Found webhookUrl in event: ${eventName}`, message);
+              
+              // Try to extract webhookUrl from the message
+              if (message.webhookUrl) {
+                currentWebhookUrl = message.webhookUrl;
+                console.log("Captured webhookUrl from event", eventName, ":", currentWebhookUrl);
+              }
+            }
           }
         });
 
@@ -574,12 +598,7 @@
             bagiraClientForm.addEventListener("submit", function(e) {
               e.preventDefault();
 
-              const callId = vapiInstance.getCallId();
-              if (!callId) {
-                alert("Ошибка: Не удалось получить ID звонка. Пожалуйста, попробуйте снова.");
-                console.error("VAPI callId is null or undefined. Cannot submit form.");
-                return; // Stop the submission
-              }
+              console.log("Current webhook URL when submitting form:", currentWebhookUrl);
 
               const phone = phoneClientInput.value;
               const email = document.getElementById("emailInput").value;
@@ -588,11 +607,23 @@
               submitButton.disabled = true;
               submitButton.textContent = "Отправка...";
 
-              // UPDATED: Webhook URL reverted
+              // Build the payload with phone, email, and webhookUrl
+              const payload = {
+                phone: phone,
+                email: email
+              };
+              
+              // Add webhookUrl if available
+              if (currentWebhookUrl) {
+                payload.webhook_url = currentWebhookUrl;
+              }
+
+              console.log("Sending to webhook:", payload);
+
               fetch("https://primary-production-3672.up.railway.app/webhook/bagira-submit", {
                 method: "POST", 
                 headers: { "Content-Type": "application/json" }, 
-                body: JSON.stringify({ phone, email, call_id: callId })
+                body: JSON.stringify(payload)
               })
               .then(response => {
                 if (response.ok) { alert("Спасибо! Мы скоро направим информацию по указанному номеру телефона или почте"); }
