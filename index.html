@@ -508,8 +508,11 @@
     // This will now run after the #currentYear element is loaded
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
+    // --- NEW: Generate a unique ID for this entire user session. ---
+    const clientSessionId = crypto.randomUUID();
+    console.log("Client Session ID Generated:", clientSessionId);
+
     var vapiInstance = null;
-    var currentWebhookUrl = null; // Variable to store the webhook URL
     const apiKey = "58f89212-0e94-4123-8f9e-3bc0dde56fe0";
     const vapiSquadId = "541e48cf-1f4a-423b-875f-889c6917a56d";
 
@@ -520,9 +523,14 @@
       s.parentNode.insertBefore(g, s);
 
       g.onload = function () {
+        // --- MODIFICATION 1: Inside the vapi.run() call ---
         vapiInstance = window.vapiSDK.run({
           apiKey: apiKey,
           squad: vapiSquadId,
+          // Pass the ID to the assistant as a variable.
+          variables: {
+            clientSessionId: clientSessionId
+          },
           config: {
             position: "bottom-right",
             idle: { color: "#7A3FFD", type: "pill", title: "Поговорить с Bagira AI", subtitle: "Голосовой юр. помощник", icon: "https://unpkg.com/lucide-static@0.321.0/icons/mic.svg" }
@@ -535,31 +543,8 @@
         const phoneClientInput = document.getElementById("phoneInput");
         const bagiraModalHeader = document.getElementById("bagiraModalHeader");
 
+        // This listener now only needs to handle opening the modal.
         vapiInstance.on("message", (message) => {
-          console.log("--- VAPI MESSAGE EVENT ---", message); // Debug all messages
-          
-          // Check for webhookUrl in the message
-          if (message && message.webhookUrl) {
-            currentWebhookUrl = message.webhookUrl;
-            console.log("Captured webhookUrl:", currentWebhookUrl);
-          }
-          
-          // Also check nested structures for webhookUrl
-          if (message && message.data && message.data.webhookUrl) {
-            currentWebhookUrl = message.data.webhookUrl;
-            console.log("Captured webhookUrl from data:", currentWebhookUrl);
-          }
-          
-          // Check if webhookUrl is in any array elements
-          if (message && Array.isArray(message)) {
-            message.forEach(item => {
-              if (item && item.webhookUrl) {
-                currentWebhookUrl = item.webhookUrl;
-                console.log("Captured webhookUrl from array:", currentWebhookUrl);
-              }
-            });
-          }
-
           if (message.type === "transcript" && message.role === "assistant" && message.transcriptType === "final" && message.transcript) {
             const assistantUtterance = message.transcript.toLowerCase().trim();
             const coreTriggerPhrase = "please type your phone number below to confirm."; 
@@ -574,22 +559,6 @@
           }
         });
 
-        // Listen to ALL VAPI events to find where webhookUrl appears
-        vapiInstance.on('*', (eventName, message) => {
-          if (message && typeof message === 'object') {
-            const messageStr = JSON.stringify(message);
-            if (messageStr.includes('webhookUrl')) {
-              console.log(`Found webhookUrl in event: ${eventName}`, message);
-              
-              // Try to extract webhookUrl from the message
-              if (message.webhookUrl) {
-                currentWebhookUrl = message.webhookUrl;
-                console.log("Captured webhookUrl from event", eventName, ":", currentWebhookUrl);
-              }
-            }
-          }
-        });
-
         if(closeBagiraModalBtn) { 
             closeBagiraModalBtn.addEventListener("click", () => { bagiraModal.style.display = "none"; });
         }
@@ -598,8 +567,6 @@
             bagiraClientForm.addEventListener("submit", function(e) {
               e.preventDefault();
 
-              console.log("Current webhook URL when submitting form:", currentWebhookUrl);
-
               const phone = phoneClientInput.value;
               const email = document.getElementById("emailInput").value;
               const submitButton = bagiraClientForm.querySelector('button[type="submit"]');
@@ -607,16 +574,12 @@
               submitButton.disabled = true;
               submitButton.textContent = "Отправка...";
 
-              // Build the payload with phone, email, and webhookUrl
+              // --- MODIFICATION 2: Inside the form submission fetch() call ---
               const payload = {
                 phone: phone,
-                email: email
+                email: email,
+                call_id: clientSessionId // Use the same variable
               };
-              
-              // Add webhookUrl if available
-              if (currentWebhookUrl) {
-                payload.webhook_url = currentWebhookUrl;
-              }
 
               console.log("Sending to webhook:", payload);
 
