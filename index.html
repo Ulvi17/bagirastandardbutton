@@ -523,19 +523,23 @@
       s.parentNode.insertBefore(g, s);
 
       g.onload = function () {
-        // --- MODIFICATION 1: Inside the vapi.run() call ---
+        // Initialize VAPI first
         vapiInstance = window.vapiSDK.run({
           apiKey: apiKey,
           squad: vapiSquadId,
-          // Pass the ID to the assistant as a variable.
-          variables: {
-            clientSessionId: clientSessionId
-          },
           config: {
             position: "bottom-right",
             idle: { color: "#7A3FFD", type: "pill", title: "Поговорить с Bagira AI", subtitle: "Голосовой юр. помощник", icon: "https://unpkg.com/lucide-static@0.321.0/icons/mic.svg" }
           }
         });
+
+        // --- NEW, MORE RELIABLE METHOD ---
+        // After initialization, explicitly set the variables.
+        vapiInstance.setVariables({
+          clientSessionId: clientSessionId
+        });
+        console.log("Attempted to set VAPI variables:", { clientSessionId: clientSessionId });
+        // ------------------------------------
 
         const bagiraModal = document.getElementById("bagiraFormModal");
         const bagiraClientForm  = document.getElementById("bagiraForm");
