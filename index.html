@@ -471,6 +471,7 @@
         Пожалуйста, укажите ваши данные для подтверждения записи.
       </div>
       <form id="bagiraForm">
+        <input type="hidden" id="websiteSessionId" name="websiteSessionId" value="">
         <label for="phoneInput">Номер телефона:</label>
         <input type="tel" id="phoneInput" required placeholder="+7 (XXX) XXX-XX-XX">
 
@@ -508,9 +509,16 @@
     // This will now run after the #currentYear element is loaded
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-    // Create a variable to store the ID we will capture from VAPI.
-    let capturedUserSessionId = null; 
-    console.log("Waiting to capture userSessionId from VAPI...");
+    // Generate a unique session ID for this browser session, persisting it in localStorage.
+    let websiteSessionId = localStorage.getItem('websiteSessionId');
+    if (!websiteSessionId) {
+      websiteSessionId = crypto.randomUUID();
+      localStorage.setItem('websiteSessionId', websiteSessionId);
+    }
+    console.log(`Using persistent websiteSessionId: ${websiteSessionId}`);
+
+    // Set the hidden input's value for form submission
+    document.getElementById('websiteSessionId').value = websiteSessionId;
 
     var vapiInstance = null;
     const apiKey = "58f89212-0e94-4123-8f9e-3bc0dde56fe0";
@@ -526,6 +534,9 @@
         vapiInstance = window.vapiSDK.run({
           apiKey: apiKey,
           squad: vapiSquadId,
+          variables: {
+            websiteSessionId: websiteSessionId
+          },
           config: {
             position: "bottom-right",
             idle: { color: "#7A3FFD", type: "pill", title: "Поговорить с Bagira AI", subtitle: "Голосовой юр. помощник", icon: "https://unpkg.com/lucide-static@0.321.0/icons/mic.svg" }
@@ -555,20 +566,6 @@
           }
         });
         
-        // --- NEW WILDCARD LISTENER TO CAPTURE THE ID ---
-        // This listener catches ALL events, including low-level ones.
-        vapiInstance.on('*', (eventName, eventData) => {
-          console.log(`Wildcard event fired: ${eventName}`, eventData);
-
-          // Check for the specific low-level message structure.
-          if (eventName === 'message' && eventData && eventData.msgStr === "sig-logs" && eventData.msgData && eventData.msgData.userSessionId) {
-            if (!capturedUserSessionId) { // Only capture it once
-              capturedUserSessionId = eventData.msgData.userSessionId;
-              console.log("SUCCESS (from wildcard): Captured userSessionId:", capturedUserSessionId);
-            }
-          }
-        });
-
         if(closeBagiraModalBtn) { 
             closeBagiraModalBtn.addEventListener("click", () => { bagiraModal.style.display = "none"; });
         }
@@ -576,12 +573,6 @@
         if(bagiraClientForm) { 
             bagiraClientForm.addEventListener("submit", function(e) {
               e.preventDefault();
-
-              if (!capturedUserSessionId) {
-                alert("Ошибка: ID сессии еще не получен. Пожалуйста, подождите несколько секунд и попробуйте снова.");
-                console.error("Form submitted before userSessionId was captured.");
-                return;
-              }
 
               const phone = phoneClientInput.value;
               const email = document.getElementById("emailInput").value;
@@ -593,7 +584,7 @@
               const payload = {
                 phone: phone,
                 email: email,
-                call_id: capturedUserSessionId 
+                websiteSessionId: websiteSessionId 
               };
 
               console.log("Sending to webhook:", payload);
