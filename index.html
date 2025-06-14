@@ -508,9 +508,9 @@
     // This will now run after the #currentYear element is loaded
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-    // --- NEW: Generate a unique ID for this entire user session. ---
-    const clientSessionId = crypto.randomUUID();
-    console.log("Client Session ID Generated:", clientSessionId);
+    // Generate a unique ID for this session using the correct name.
+    const mtgSessionId = crypto.randomUUID();
+    console.log("Session ID Generated:", mtgSessionId);
 
     var vapiInstance = null;
     const apiKey = "58f89212-0e94-4123-8f9e-3bc0dde56fe0";
@@ -523,23 +523,18 @@
       s.parentNode.insertBefore(g, s);
 
       g.onload = function () {
-        // Initialize VAPI first
+        // Reverted to passing variables during initialization, but with the correct name.
         vapiInstance = window.vapiSDK.run({
           apiKey: apiKey,
           squad: vapiSquadId,
+          variables: {
+            mtgSessionId: mtgSessionId
+          },
           config: {
             position: "bottom-right",
             idle: { color: "#7A3FFD", type: "pill", title: "Поговорить с Bagira AI", subtitle: "Голосовой юр. помощник", icon: "https://unpkg.com/lucide-static@0.321.0/icons/mic.svg" }
           }
         });
-
-        // --- NEW, MORE RELIABLE METHOD ---
-        // After initialization, explicitly set the variables.
-        vapiInstance.setVariables({
-          clientSessionId: clientSessionId
-        });
-        console.log("Attempted to set VAPI variables:", { clientSessionId: clientSessionId });
-        // ------------------------------------
 
         const bagiraModal = document.getElementById("bagiraFormModal");
         const bagiraClientForm  = document.getElementById("bagiraForm");
@@ -547,13 +542,18 @@
         const phoneClientInput = document.getElementById("phoneInput");
         const bagiraModalHeader = document.getElementById("bagiraModalHeader");
 
-        // This listener now only needs to handle opening the modal.
         vapiInstance.on("message", (message) => {
           if (message.type === "transcript" && message.role === "assistant" && message.transcriptType === "final" && message.transcript) {
             const assistantUtterance = message.transcript.toLowerCase().trim();
+            
+            // --- FOR DEBUGGING: Log the assistant's final message ---
+            console.log("Assistant's final message:", assistantUtterance);
+            // ---------------------------------------------------------
+
             const coreTriggerPhrase = "please type your phone number below to confirm."; 
             
             if (assistantUtterance.includes(coreTriggerPhrase)) {
+              console.log("Trigger phrase detected! Opening modal.");
               if (bagiraModal.style.display !== "flex") {
                 bagiraModal.style.display = "flex";
                 phoneClientInput.focus();
@@ -578,11 +578,11 @@
               submitButton.disabled = true;
               submitButton.textContent = "Отправка...";
 
-              // --- MODIFICATION 2: Inside the form submission fetch() call ---
+              // Include the correctly named session ID in the form submission.
               const payload = {
                 phone: phone,
                 email: email,
-                call_id: clientSessionId // Use the same variable
+                call_id: mtgSessionId 
               };
 
               console.log("Sending to webhook:", payload);
@@ -601,7 +601,6 @@
               .catch(error => {
                 console.error("Ошибка отправки формы Bagira AI:", error);
                 alert("Что-то пошло не так. ❌\n" + (error.message || error));
-                bagiraModal.style.display = "none";
               })
               .finally(() => {
                 submitButton.disabled = false;
