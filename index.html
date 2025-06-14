@@ -542,6 +542,10 @@
         // This listener now handles both capturing the ID and triggering the pop-up.
         vapiInstance.on("message", (message) => {
 
+          // --- FOR DEBUGGING: Log every single message from VAPI ---
+          console.log("VAPI MESSAGE RECEIVED:", message);
+          // --------------------------------------------------------
+
           // --- CAPTURE THE userSessionId FROM VAPI's 'sig-logs' MESSAGE ---
           if (message.msgStr === "sig-logs" && message.msgData && message.msgData.userSessionId) {
             if (!capturedUserSessionId) { // Only capture it once
