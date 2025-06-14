@@ -508,9 +508,9 @@
     // This will now run after the #currentYear element is loaded
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-    // Generate a unique ID for this session using the correct name.
-    const mtgSessionId = crypto.randomUUID();
-    console.log("Session ID Generated:", mtgSessionId);
+    // Create a variable to store the ID we will capture from VAPI.
+    let capturedUserSessionId = null; 
+    console.log("Waiting to capture userSessionId from VAPI...");
 
     var vapiInstance = null;
     const apiKey = "58f89212-0e94-4123-8f9e-3bc0dde56fe0";
@@ -523,13 +523,10 @@
       s.parentNode.insertBefore(g, s);
 
       g.onload = function () {
-        // Reverted to passing variables during initialization, with the correct name.
+        // We no longer pass variables, as we will capture them from VAPI instead.
         vapiInstance = window.vapiSDK.run({
           apiKey: apiKey,
           squad: vapiSquadId,
-          variables: {
-            mtgSessionId: mtgSessionId
-          },
           config: {
             position: "bottom-right",
             idle: { color: "#7A3FFD", type: "pill", title: "Поговорить с Bagira AI", subtitle: "Голосовой юр. помощник", icon: "https://unpkg.com/lucide-static@0.321.0/icons/mic.svg" }
@@ -542,11 +539,21 @@
         const phoneClientInput = document.getElementById("phoneInput");
         const bagiraModalHeader = document.getElementById("bagiraModalHeader");
 
+        // This listener now handles both capturing the ID and triggering the pop-up.
         vapiInstance.on("message", (message) => {
+
+          // --- CAPTURE THE userSessionId FROM VAPI's 'sig-logs' MESSAGE ---
+          if (message.msgStr === "sig-logs" && message.msgData && message.msgData.userSessionId) {
+            if (!capturedUserSessionId) { // Only capture it once
+              capturedUserSessionId = message.msgData.userSessionId;
+              console.log("SUCCESS: Captured userSessionId from VAPI:", capturedUserSessionId);
+            }
+          }
+
+          // --- TRIGGER THE POP-UP FORM ---
           if (message.type === "transcript" && message.role === "assistant" && message.transcriptType === "final" && message.transcript) {
             const assistantUtterance = message.transcript.toLowerCase().trim();
             
-            // FOR DEBUGGING: Log the assistant's final message
             console.log("Assistant's final message:", assistantUtterance);
 
             const coreTriggerPhrase = "please type your phone number below to confirm."; 
@@ -570,6 +577,13 @@
             bagiraClientForm.addEventListener("submit", function(e) {
               e.preventDefault();
 
+              // Check if we successfully captured the ID before submitting.
+              if (!capturedUserSessionId) {
+                alert("Ошибка: ID сессии еще не получен. Пожалуйста, подождите несколько секунд и попробуйте снова.");
+                console.error("Form submitted before userSessionId was captured.");
+                return;
+              }
+
               const phone = phoneClientInput.value;
               const email = document.getElementById("emailInput").value;
               const submitButton = bagiraClientForm.querySelector('button[type="submit"]');
@@ -577,11 +591,11 @@
               submitButton.disabled = true;
               submitButton.textContent = "Отправка...";
 
-              // Include the correctly named session ID in the form submission.
+              // Send the captured ID in the form submission.
               const payload = {
                 phone: phone,
                 email: email,
-                call_id: mtgSessionId 
+                call_id: capturedUserSessionId 
               };
 
               console.log("Sending to webhook:", payload);
