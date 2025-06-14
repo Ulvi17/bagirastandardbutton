@@ -523,7 +523,7 @@
       s.parentNode.insertBefore(g, s);
 
       g.onload = function () {
-        // Reverted to passing variables during initialization, but with the correct name.
+        // Reverted to passing variables during initialization, with the correct name.
         vapiInstance = window.vapiSDK.run({
           apiKey: apiKey,
           squad: vapiSquadId,
@@ -546,9 +546,8 @@
           if (message.type === "transcript" && message.role === "assistant" && message.transcriptType === "final" && message.transcript) {
             const assistantUtterance = message.transcript.toLowerCase().trim();
             
-            // --- FOR DEBUGGING: Log the assistant's final message ---
+            // FOR DEBUGGING: Log the assistant's final message
             console.log("Assistant's final message:", assistantUtterance);
-            // ---------------------------------------------------------
 
             const coreTriggerPhrase = "please type your phone number below to confirm."; 
             
