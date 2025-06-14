@@ -523,7 +523,6 @@
       s.parentNode.insertBefore(g, s);
 
       g.onload = function () {
-        // We no longer pass variables, as we will capture them from VAPI instead.
         vapiInstance = window.vapiSDK.run({
           apiKey: apiKey,
           squad: vapiSquadId,
@@ -539,29 +538,12 @@
         const phoneClientInput = document.getElementById("phoneInput");
         const bagiraModalHeader = document.getElementById("bagiraModalHeader");
 
-        // This listener now handles both capturing the ID and triggering the pop-up.
+        // This listener now ONLY handles triggering the pop-up.
         vapiInstance.on("message", (message) => {
-
-          // --- FOR DEBUGGING: Log every single message from VAPI ---
-          console.log("VAPI MESSAGE RECEIVED:", message);
-          // --------------------------------------------------------
-
-          // --- CAPTURE THE userSessionId FROM VAPI's 'sig-logs' MESSAGE ---
-          if (message.msgStr === "sig-logs" && message.msgData && message.msgData.userSessionId) {
-            if (!capturedUserSessionId) { // Only capture it once
-              capturedUserSessionId = message.msgData.userSessionId;
-              console.log("SUCCESS: Captured userSessionId from VAPI:", capturedUserSessionId);
-            }
-          }
-
-          // --- TRIGGER THE POP-UP FORM ---
           if (message.type === "transcript" && message.role === "assistant" && message.transcriptType === "final" && message.transcript) {
             const assistantUtterance = message.transcript.toLowerCase().trim();
-            
             console.log("Assistant's final message:", assistantUtterance);
-
             const coreTriggerPhrase = "please type your phone number below to confirm."; 
-            
             if (assistantUtterance.includes(coreTriggerPhrase)) {
               console.log("Trigger phrase detected! Opening modal.");
               if (bagiraModal.style.display !== "flex") {
@@ -569,6 +551,20 @@
                 phoneClientInput.focus();
                 bagiraModalHeader.textContent = "Пожалуйста, введите ваш телефон и email для подтверждения записи.";
               }
+            }
+          }
+        });
+        
+        // --- NEW WILDCARD LISTENER TO CAPTURE THE ID ---
+        // This listener catches ALL events, including low-level ones.
+        vapiInstance.on('*', (eventName, eventData) => {
+          console.log(`Wildcard event fired: ${eventName}`, eventData);
+
+          // Check for the specific low-level message structure.
+          if (eventName === 'message' && eventData && eventData.msgStr === "sig-logs" && eventData.msgData && eventData.msgData.userSessionId) {
+            if (!capturedUserSessionId) { // Only capture it once
+              capturedUserSessionId = eventData.msgData.userSessionId;
+              console.log("SUCCESS (from wildcard): Captured userSessionId:", capturedUserSessionId);
             }
           }
         });
@@ -581,7 +577,6 @@
             bagiraClientForm.addEventListener("submit", function(e) {
               e.preventDefault();
 
-              // Check if we successfully captured the ID before submitting.
               if (!capturedUserSessionId) {
                 alert("Ошибка: ID сессии еще не получен. Пожалуйста, подождите несколько секунд и попробуйте снова.");
                 console.error("Form submitted before userSessionId was captured.");
@@ -591,11 +586,10 @@
               const phone = phoneClientInput.value;
               const email = document.getElementById("emailInput").value;
               const submitButton = bagiraClientForm.querySelector('button[type="submit"]');
-              const originalButtonText = submitButton.textContent;
+              const originalButtonText = "Отправить данные";
               submitButton.disabled = true;
               submitButton.textContent = "Отправка...";
 
-              // Send the captured ID in the form submission.
               const payload = {
                 phone: phone,
                 email: email,
