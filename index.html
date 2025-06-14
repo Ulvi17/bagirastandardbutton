@@ -471,7 +471,7 @@
         Пожалуйста, укажите ваши данные для подтверждения записи.
       </div>
       <form id="bagiraForm">
-        <input type="hidden" id="websiteSessionId" name="websiteSessionId" value="">
+        <input type="hidden" id="clientSessionId" name="clientSessionId" value="">
         <label for="phoneInput">Номер телефона:</label>
         <input type="tel" id="phoneInput" required placeholder="+7 (XXX) XXX-XX-XX">
 
@@ -509,16 +509,12 @@
     // This will now run after the #currentYear element is loaded
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-    // Generate a unique session ID for this browser session, persisting it in localStorage.
-    let websiteSessionId = localStorage.getItem('websiteSessionId');
-    if (!websiteSessionId) {
-      websiteSessionId = crypto.randomUUID();
-      localStorage.setItem('websiteSessionId', websiteSessionId);
-    }
-    console.log(`Using persistent websiteSessionId: ${websiteSessionId}`);
+    // Generate a new, unique client session ID for every page load.
+    const clientSessionId = crypto.randomUUID();
+    console.log(`Generated new Client Session ID for this visit: ${clientSessionId}`);
 
     // Set the hidden input's value for form submission
-    document.getElementById('websiteSessionId').value = websiteSessionId;
+    document.getElementById('clientSessionId').value = clientSessionId;
 
     var vapiInstance = null;
     const apiKey = "58f89212-0e94-4123-8f9e-3bc0dde56fe0";
@@ -534,8 +530,12 @@
         vapiInstance = window.vapiSDK.run({
           apiKey: apiKey,
           squad: vapiSquadId,
+          sessionId: clientSessionId,
           variables: {
-            clientSessionId: websiteSessionId
+            clientSessionId: clientSessionId
+          },
+          metadata: {
+            clientSessionId: clientSessionId
           },
           config: {
             position: "bottom-right",
@@ -548,6 +548,12 @@
         const closeBagiraModalBtn = document.getElementById("closeBagiraModal");
         const phoneClientInput = document.getElementById("phoneInput");
         const bagiraModalHeader = document.getElementById("bagiraModalHeader");
+
+        // NEW: Listener for the 'call-start' event for debugging.
+        vapiInstance.on('call-start', ({ call }) => {
+          // This confirms that VAPI has started the call and provides its internal call ID.
+          console.log(`VAPI call started. VAPI Call ID: ${call.id}, Our Client Session ID: ${clientSessionId}`);
+        });
 
         // This listener now ONLY handles triggering the pop-up.
         vapiInstance.on("message", (message) => {
@@ -584,10 +590,10 @@
               const payload = {
                 phone: phone,
                 email: email,
-                websiteSessionId: websiteSessionId 
+                clientSessionId: clientSessionId 
               };
 
-              console.log("Sending to webhook:", payload);
+              console.log("Sending form data to webhook:", payload);
 
               fetch("https://primary-production-3672.up.railway.app/webhook/bagira-submit", {
                 method: "POST", 
