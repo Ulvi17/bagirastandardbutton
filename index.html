@@ -437,7 +437,8 @@
     document.getElementById('clientSessionId').value = clientSessionId;
 
     const apiKey = "58f89212-0e94-4123-8f9e-3bc0dde56fe0";
-    const vapiSquadId = "541e48cf-1f4a-423b-875f-889c6917a56d";
+    // IMPORTANT: Replace this placeholder with your actual Assistant ID from the VAPI Dashboard.
+    const assistantId = "YOUR_ASSISTANT_ID_HERE"; // e.g., "asst_..."
     
     // Initialize Vapi using the imported class
     const vapi = new Vapi(apiKey);
@@ -581,9 +582,9 @@
         vapi.stop();
       } else {
         // FINAL CORRECTED VERSION based on official VAPI documentation.
-        // The first argument is the assistant/squad ID.
+        // The first argument is the assistant ID.
         // The second is an overrides object.
-        vapi.start(vapiSquadId, {
+        vapi.start(assistantId, {
           variableValues: { clientSessionId: clientSessionId }
         });
       }
