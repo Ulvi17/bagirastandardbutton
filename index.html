@@ -452,6 +452,10 @@
         <p>
           Узнайте, как Bagira AI взаимодействует с потенциальными клиентами. Нажмите на иконку микрофона и запишитесь на консультацию.
         </p>
+        <!-- NEW BUTTON TO START THE CALL -->
+        <button id="startVapiCallBtn" class="btn btn-primary" style="background-color: #FFD240; color: var(--primary-darker); margin-top: 20px;">
+          <i class="fas fa-microphone"></i> Начать разговор с ассистентом
+        </button>
       </div>
     </section>
   </main>
@@ -504,210 +508,195 @@
     </div>
   </div>
 
-  <!-- SCRIPT MOVED TO THE END OF BODY -->
-  <script>
-    // This will now run after the #currentYear element is loaded
-    document.getElementById('currentYear').textContent = new Date().getFullYear();
+  <!-- SCRIPT SECTION REWRITTEN AS A MODULE -->
+  <script type="module">
+    // Import the Vapi class directly from the modern ES Module CDN link
+    import Vapi from 'https://cdn.jsdelivr.net/npm/@vapi-ai/web/dist/vapi.es.js';
 
-    // Generate a new, unique client session ID for every page load.
+    // --- INITIAL SETUP ---
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
     const clientSessionId = crypto.randomUUID();
     console.log(`Generated new Client Session ID for this visit: ${clientSessionId}`);
-
-    // Set the hidden input's value for form submission
     document.getElementById('clientSessionId').value = clientSessionId;
 
-    var vapiInstance = null;
+    // --- VAPI & API CONFIG ---
     const apiKey = "58f89212-0e94-4123-8f9e-3bc0dde56fe0";
     const vapiSquadId = "541e48cf-1f4a-423b-875f-889c6917a56d";
+    const vapi = new Vapi(apiKey);
 
-    (function (d, t) {
-      var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
-      g.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
-      g.defer = g.async = true;
-      s.parentNode.insertBefore(g, s);
-
-      g.onload = function () {
-        vapiInstance = window.vapiSDK.run({
-          apiKey: apiKey,
-          squad: vapiSquadId,
-          sessionId: clientSessionId,
-          variables: {
-            clientSessionId: clientSessionId
-          },
-          metadata: {
-            clientSessionId: clientSessionId
-          },
-          config: {
-            position: "bottom-right",
-            idle: { color: "#7A3FFD", type: "pill", title: "Поговорить с Bagira AI", subtitle: "Голосовой юр. помощник", icon: "https://unpkg.com/lucide-static@0.321.0/icons/mic.svg" }
-          }
-        });
-
-        const bagiraModal = document.getElementById("bagiraFormModal");
-        const bagiraClientForm  = document.getElementById("bagiraForm");
-        const closeBagiraModalBtn = document.getElementById("closeBagiraModal");
-        const phoneClientInput = document.getElementById("phoneInput");
-        const bagiraModalHeader = document.getElementById("bagiraModalHeader");
-
-        // NEW: Listener for the 'call-start' event for debugging.
-        vapiInstance.on('call-start', ({ call }) => {
-          // This confirms that VAPI has started the call and provides its internal call ID.
-          console.log(`VAPI call started. VAPI Call ID: ${call.id}, Our Client Session ID: ${clientSessionId}`);
-        });
-
-        // This listener now ONLY handles triggering the pop-up.
-        vapiInstance.on("message", (message) => {
-          if (message.type === "transcript" && message.role === "assistant" && message.transcriptType === "final" && message.transcript) {
-            const assistantUtterance = message.transcript.toLowerCase().trim();
-            console.log("Assistant's final message:", assistantUtterance);
-            const coreTriggerPhrase = "please type your phone number below to confirm."; 
-            if (assistantUtterance.includes(coreTriggerPhrase)) {
-              console.log("Trigger phrase detected! Opening modal.");
-              if (bagiraModal.style.display !== "flex") {
-                bagiraModal.style.display = "flex";
-                phoneClientInput.focus();
-                bagiraModalHeader.textContent = "Пожалуйста, введите ваш телефон и email для подтверждения записи.";
-              }
-            }
-          }
-        });
-        
-        if(closeBagiraModalBtn) { 
-            closeBagiraModalBtn.addEventListener("click", () => { bagiraModal.style.display = "none"; });
-        }
-
-        if(bagiraClientForm) { 
-            bagiraClientForm.addEventListener("submit", function(e) {
-              e.preventDefault();
-
-              const phone = phoneClientInput.value;
-              const email = document.getElementById("emailInput").value;
-              const submitButton = bagiraClientForm.querySelector('button[type="submit"]');
-              const originalButtonText = "Отправить данные";
-              submitButton.disabled = true;
-              submitButton.textContent = "Отправка...";
-
-              const payload = {
-                phone: phone,
-                email: email,
-                clientSessionId: clientSessionId 
-              };
-
-              console.log("Sending form data to webhook:", payload);
-
-              fetch("https://primary-production-3672.up.railway.app/webhook/bagira-submit", {
-                method: "POST", 
-                headers: { "Content-Type": "application/json" }, 
-                body: JSON.stringify(payload)
-              })
-              .then(response => {
-                if (response.ok) { alert("Спасибо! Мы скоро направим информацию по указанному номеру телефона или почте"); }
-                else { alert("Ошибка отправки. ❌ Пожалуйста, попробуйте еще раз или свяжитесь с поддержкой."); }
-                bagiraModal.style.display = "none";
-                bagiraClientForm.reset(); 
-              })
-              .catch(error => {
-                console.error("Ошибка отправки формы Bagira AI:", error);
-                alert("Что-то пошло не так. ❌\n" + (error.message || error));
-              })
-              .finally(() => {
-                submitButton.disabled = false;
-                submitButton.textContent = originalButtonText;
-              });
-            });
-        }
-      };
-    })(document, "script");
-
+    // --- DOM ELEMENT REFERENCES ---
+    const startVapiCallBtn = document.getElementById("startVapiCallBtn");
     const pilotModal = document.getElementById("pilotFormModal");
     const joinPilotBtn = document.getElementById("joinPilotBtnHero");
     const closePilotModalBtn = document.getElementById("closePilotModal");
     const pilotProgramForm = document.getElementById("pilotProgramForm");
     const pilotFormMessage = document.getElementById("pilotFormMessage");
     const submitPilotFormBtn = document.getElementById("submitPilotForm");
+    const bagiraModal = document.getElementById("bagiraFormModal");
+    const bagiraClientForm = document.getElementById("bagiraForm");
+    const closeBagiraModalBtn = document.getElementById("closeBagiraModal");
+    const phoneClientInput = document.getElementById("phoneInput");
+    const bagiraModalHeader = document.getElementById("bagiraModalHeader");
+
+    // --- VAPI LOGIC ---
+    startVapiCallBtn.addEventListener('click', () => {
+      startVapiCallBtn.disabled = true;
+      startVapiCallBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Соединение...';
+      vapi.start(vapiSquadId, {
+        sessionId: clientSessionId,
+        variables: { clientSessionId: clientSessionId },
+        metadata: { clientSessionId: clientSessionId }
+      });
+    });
+
+    vapi.on('call-start', ({ call }) => {
+      console.log(`VAPI call started. VAPI Call ID: ${call.id}, Our Client Session ID: ${clientSessionId}`);
+      startVapiCallBtn.textContent = "Разговор активен...";
+    });
+
+    vapi.on('call-end', () => {
+      console.log('VAPI call ended.');
+      startVapiCallBtn.disabled = false;
+      startVapiCallBtn.innerHTML = '<i class="fas fa-microphone"></i> Начать разговор с ассистентом';
+    });
+
+    vapi.on("message", (message) => {
+      if (message.type === "transcript" && message.role === "assistant" && message.transcriptType === "final" && message.transcript) {
+        const assistantUtterance = message.transcript.toLowerCase().trim();
+        console.log("Assistant's final message:", assistantUtterance);
+        const coreTriggerPhrase = "please type your phone number below to confirm.";
+        if (assistantUtterance.includes(coreTriggerPhrase)) {
+          console.log("Trigger phrase detected! Opening modal.");
+          if (bagiraModal.style.display !== "flex") {
+            bagiraModal.style.display = "flex";
+            phoneClientInput.focus();
+            bagiraModalHeader.textContent = "Пожалуйста, введите ваш телефон и email для подтверждения записи.";
+          }
+        }
+      }
+    });
+
+    // --- MODAL & FORM LOGIC (UNCHANGED) ---
+    if (closeBagiraModalBtn) {
+      closeBagiraModalBtn.addEventListener("click", () => { bagiraModal.style.display = "none"; });
+    }
+
+    if (bagiraClientForm) {
+      bagiraClientForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const phone = phoneClientInput.value;
+        const email = document.getElementById("emailInput").value;
+        const submitButton = bagiraClientForm.querySelector('button[type="submit"]');
+        const originalButtonText = "Отправить данные";
+        submitButton.disabled = true;
+        submitButton.textContent = "Отправка...";
+        const payload = {
+          phone: phone,
+          email: email,
+          clientSessionId: clientSessionId
+        };
+        console.log("Sending form data to webhook:", payload);
+        fetch("https://primary-production-3672.up.railway.app/webhook/bagira-submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        })
+        .then(response => {
+          if (response.ok) { alert("Спасибо! Мы скоро направим информацию по указанному номеру телефона или почте"); }
+          else { alert("Ошибка отправки. ❌ Пожалуйста, попробуйте еще раз или свяжитесь с поддержкой."); }
+          bagiraModal.style.display = "none";
+          bagiraClientForm.reset();
+        })
+        .catch(error => {
+          console.error("Ошибка отправки формы Bagira AI:", error);
+          alert("Что-то пошло не так. ❌\n" + (error.message || error));
+        })
+        .finally(() => {
+          submitButton.disabled = false;
+          submitButton.textContent = originalButtonText;
+        });
+      });
+    }
 
     if (joinPilotBtn) {
-        joinPilotBtn.addEventListener("click", () => {
-            if(pilotModal) { 
-                pilotModal.style.display = "flex";
-                if(pilotFormMessage) pilotFormMessage.style.display = "none"; 
-                if(pilotProgramForm) pilotProgramForm.reset(); 
-            }
-        });
+      joinPilotBtn.addEventListener("click", () => {
+        if (pilotModal) {
+          pilotModal.style.display = "flex";
+          if (pilotFormMessage) pilotFormMessage.style.display = "none";
+          if (pilotProgramForm) pilotProgramForm.reset();
+        }
+      });
     }
 
     if (closePilotModalBtn) {
-        closePilotModalBtn.addEventListener("click", () => {
-            if(pilotModal) pilotModal.style.display = "none";
-        });
+      closePilotModalBtn.addEventListener("click", () => {
+        if (pilotModal) pilotModal.style.display = "none";
+      });
     }
 
     window.addEventListener("click", (event) => {
-        const bagiraModalElement = document.getElementById("bagiraFormModal");
-        const pilotModalElement = document.getElementById("pilotFormModal");
-
-        if (event.target === pilotModalElement) {
-            pilotModalElement.style.display = "none";
-        }
-        if (event.target === bagiraModalElement) { 
-            bagiraModalElement.style.display = "none";
-        }
+      const bagiraModalElement = document.getElementById("bagiraFormModal");
+      const pilotModalElement = document.getElementById("pilotFormModal");
+      if (event.target === pilotModalElement) {
+        pilotModalElement.style.display = "none";
+      }
+      if (event.target === bagiraModalElement) {
+        bagiraModalElement.style.display = "none";
+      }
     });
-    
+
     if (pilotProgramForm) {
-        pilotProgramForm.addEventListener("submit", function(e) {
-            e.preventDefault();
-            if(pilotFormMessage) pilotFormMessage.style.display = "none"; 
-            if(submitPilotFormBtn) {
-                submitPilotFormBtn.disabled = true;
-                submitPilotFormBtn.textContent = "Отправка...";
+      pilotProgramForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (pilotFormMessage) pilotFormMessage.style.display = "none";
+        if (submitPilotFormBtn) {
+          submitPilotFormBtn.disabled = true;
+          submitPilotFormBtn.textContent = "Отправка...";
+        }
+        const formData = {
+          name: document.getElementById("pilotName").value,
+          companyName: document.getElementById("pilotCompanyName").value,
+          website: document.getElementById("pilotWebsite").value
+        };
+        fetch("https://primary-production-3672.up.railway.app/webhook/vapi-pilotform", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
+        })
+        .then(response => {
+          if (response.ok) {
+            if (pilotFormMessage) {
+              pilotFormMessage.textContent = "Спасибо! Мы скоро с вами свяжемся.";
+              pilotFormMessage.className = "modal-message success";
             }
-
-            const formData = {
-                name: document.getElementById("pilotName").value,
-                companyName: document.getElementById("pilotCompanyName").value,
-                website: document.getElementById("pilotWebsite").value
-            };
-
-            fetch("https://primary-production-3672.up.railway.app/webhook/vapi-pilotform", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData)
-            })
-            .then(response => {
-                if (response.ok) {
-                    if(pilotFormMessage) {
-                        pilotFormMessage.textContent = "Спасибо! Мы скоро с вами свяжемся.";
-                        pilotFormMessage.className = "modal-message success"; 
-                    }
-                    pilotProgramForm.reset();
-                } else {
-                    return response.json().catch(() => ({ 
-                        message: response.statusText || "Неизвестная ошибка сервера"
-                    })).then(err => { throw err; });
-                }
-            })
-            .catch(error => {
-                console.error("Ошибка отправки пилотной формы:", error);
-                let errorMessage = "Ошибка отправки. Пожалуйста, попробуйте еще раз.";
-                if (error && error.message) {
-                    errorMessage = error.message;
-                } else if (typeof error === 'string') {
-                    errorMessage = error;
-                }
-                if(pilotFormMessage) {
-                    pilotFormMessage.textContent = "Ошибка: " + errorMessage;
-                    pilotFormMessage.className = "modal-message error"; 
-                }
-            })
-            .finally(() => {
-                if(submitPilotFormBtn) {
-                    submitPilotFormBtn.disabled = false;
-                    submitPilotFormBtn.textContent = "Отправить заявку";
-                }
-                if(pilotFormMessage) pilotFormMessage.style.display = "block"; 
-            });
+            pilotProgramForm.reset();
+          } else {
+            return response.json().catch(() => ({
+              message: response.statusText || "Неизвестная ошибка сервера"
+            })).then(err => { throw err; });
+          }
+        })
+        .catch(error => {
+          console.error("Ошибка отправки пилотной формы:", error);
+          let errorMessage = "Ошибка отправки. Пожалуйста, попробуйте еще раз.";
+          if (error && error.message) {
+            errorMessage = error.message;
+          } else if (typeof error === 'string') {
+            errorMessage = error;
+          }
+          if (pilotFormMessage) {
+            pilotFormMessage.textContent = "Ошибка: " + errorMessage;
+            pilotFormMessage.className = "modal-message error";
+          }
+        })
+        .finally(() => {
+          if (submitPilotFormBtn) {
+            submitPilotFormBtn.disabled = false;
+            submitPilotFormBtn.textContent = "Отправить заявку";
+          }
+          if (pilotFormMessage) pilotFormMessage.style.display = "block";
         });
+      });
     }
   </script>
 </body>
