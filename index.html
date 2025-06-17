@@ -707,14 +707,15 @@
       });
     }
 
-    // --- Vapi Specific Logic ---
+    // --- VAPI LOGIC ---
     vapiButton.addEventListener('click', () => {
       if (isCallActive) {
         vapi.stop();
       } else {
-        vapi.start(vapiSquadId, {
+        vapi.start({
+          assistantId: vapiSquadId,
           sessionId: clientSessionId,
-          variables: { clientSessionId: clientSessionId },
+          variableValues: { clientSessionId: clientSessionId },
           metadata: { clientSessionId: clientSessionId }
         });
       }
