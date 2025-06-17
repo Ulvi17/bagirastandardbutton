@@ -103,248 +103,149 @@
         align-items: center;
     }
     .hero-section .main-page-heading {
-        color: var(--text-color-dark);
         font-size: 2.8rem;
-        font-weight: 700;
+        font-weight: 800;
         margin-bottom: 20px;
-        max-width: 850px;
         line-height: 1.2;
+        max-width: 800px;
     }
-    .hero-section .main-page-subheading {
-        color: var(--text-color-light);
+    .hero-section .hero-subheading {
         font-size: 1.25rem;
-        margin-bottom: 35px;
-        max-width: 750px;
-    }
-    .hero-section #joinPilotBtnHero {
-        margin-bottom: 40px;
-    }
-
-    .video-responsive-wrapper {
-        position: relative;
-        overflow: hidden;
-        width: 100%;
-        max-width: 720px; 
-        padding-top: 56.25%; 
-        margin: 0 auto 40px auto; 
-        border-radius: 8px; 
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-    }
-    .video-responsive-wrapper iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: 0;
-        width: 100%;
-        height: 100%;
-        border: none; 
+        color: var(--text-color-light);
+        margin-bottom: 30px;
+        max-width: 700px;
     }
 
     main {
-      flex-grow: 1;
-      padding-top: 0; 
-    }
-    section {
-      padding: 40px 0; /* Default padding for sections */
-      text-align: center;
-    }
-    main > section:first-of-type {
-        background-color: var(--bg-light);
-    }
-    main > section:nth-of-type(2) {
-        background-color: var(--bg-white);
+        flex: 1;
     }
 
-    section h2.section-title {
-      font-size: 2rem;
-      color: var(--text-color-dark);
-      margin-bottom: 15px;
-      font-weight: 600;
+    .features-section, .pilot-section, .cta-vapi-section {
+        padding: 60px 0;
+        text-align: center;
     }
-    section p.section-subtitle {
-      font-size: 1.1rem;
-      color: var(--text-color-light);
-      max-width: 700px;
-      margin: 0 auto 40px auto;
+    .features-section { background-color: var(--bg-light); }
+    .pilot-section { background-color: var(--bg-white); }
+    .cta-vapi-section {
+      background: linear-gradient(45deg, var(--primary-color), var(--primary-darker));
+      color: white;
+      padding: 80px 0;
     }
-    .info-grid {
+    .cta-vapi-section h3 { font-size: 2rem; margin-bottom: 10px; }
+    .cta-vapi-section p { font-size: 1.1rem; max-width: 600px; margin: auto; opacity: 0.9;}
+
+    .section-heading {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 40px;
+    }
+
+    .features-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 30px;
-        margin-top: 30px;
         text-align: left;
     }
-    .info-item {
-        background-color: var(--bg-white);
-        padding: 25px;
+    .feature-card {
+        background: var(--bg-white);
+        padding: 30px;
         border-radius: 8px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.07);
-        border-left: 4px solid var(--primary-color);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border: 1px solid var(--border-color);
     }
-    .info-item .item-icon {
-        font-size: 2rem;
+    .feature-card .feature-icon {
+        font-size: 2.5rem;
         color: var(--primary-color);
         margin-bottom: 15px;
-        display: inline-block;
     }
-    .info-item h3 {
-        color: var(--text-color-dark);
-        font-size: 1.3rem;
-        margin-top: 0;
+    .feature-card h3 {
+        font-size: 1.4rem;
         margin-bottom: 10px;
-        font-weight: 600;
     }
-    .info-item p {
-        font-size: 0.95rem;
+    .feature-card p {
         color: var(--text-color-light);
-        margin-bottom: 0;
+        font-size: 1rem;
     }
 
-    /* UPDATED: CTA VAPI Section for full width band */
-    .cta-vapi-section {
-      background-color: var(--primary-darker);
-      color: white;
-      /* border-radius: 8px; /* Removed for sharp corners */
-      padding: 50px 0; /* Increased padding, 0 for horizontal to let container handle it */
-      margin-top: 0;    /* Removed */
-      margin-bottom: 0; /* Removed */
-      width: 100%; /* Ensure it spans full width */
-    }
-    .cta-vapi-section .container { /* Ensure container inside still constrains content */
-        max-width: 1024px; /* Or your desired content width */
-        margin: 0 auto;
-        padding: 0 15px; /* Keep horizontal padding for content */
-    }
-    .cta-vapi-section h3 {
-      font-size: 1.8rem; /* Slightly larger */
-      margin-bottom: 15px; /* Adjusted */
-      font-weight: 600;
-      color: white;
-    }
-    .cta-vapi-section p {
-        color: rgba(255,255,255,0.9);
-        margin-bottom: 0;
-        font-size: 1.1rem; /* Slightly larger */
+    .pilot-section p {
+        font-size: 1.1rem;
+        max-width: 700px;
+        margin: 0 auto 30px auto;
+        color: var(--text-color-light);
     }
 
     footer.page-footer {
       background-color: var(--text-color-dark);
-      color: #bdc3c7;
-      padding: 30px 0;
+      color: var(--bg-light);
       text-align: center;
-      font-size: 0.9rem;
-      margin-top: auto; /* This should push footer to bottom if content is short */
-                         /* but if cta-vapi-section is last, margin-top: 0 might be fine */
+      padding: 30px 0;
+      margin-top: auto;
     }
-    footer.page-footer p {
-        margin: 0 0 10px 0;
-        color: #bdc3c7;
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0; top: 0;
+        width: 100%; height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.5);
+        align-items: center;
+        justify-content: center;
     }
-    footer.page-footer a {
-        color: var(--primary-color);
-        text-decoration: none;
+    .modal-content {
+        background-color: #fff;
+        margin: auto;
+        padding: 30px;
+        border: 1px solid #888;
+        width: 90%;
+        max-width: 500px;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        position: relative;
     }
-    footer.page-footer a:hover {
-        text-decoration: underline;
+    .close-button {
+        color: #aaa;
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
     }
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 0, 0.6);
-      z-index: 10000;
-      backdrop-filter: blur(3px);
+    .close-button:hover, .close-button:focus {
+        color: #000;
     }
-    .modal-overlay .modal-content {
-      position: relative;
-      background: var(--bg-white);
-      padding: 25px 30px;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 400px;
-      box-sizing: border-box;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0, 0, 0, 0.05);
-      text-align: left;
+    .modal-content h2 {
+        margin-top: 0;
+        font-size: 1.8rem;
     }
-    .modal-overlay .modal-close-btn {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      background: transparent;
-      border: none;
-      font-size: 1.5rem;
-      line-height: 1;
-      cursor: pointer;
-      color: #888;
-      transition: color 0.2s ease-in-out;
-    }
-    .modal-overlay .modal-close-btn:hover { color: #555; }
-    .modal-overlay .modal-header-title {
-      margin-bottom: 20px;
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: var(--text-color-dark);
-    }
-    .modal-overlay label {
+    .modal-content form label {
         display: block;
         margin-bottom: 8px;
-        font-weight: 500;
-        font-size: 0.9rem;
-        color: #454545;
+        font-weight: 600;
     }
-    .modal-overlay input[type="text"],
-    .modal-overlay input[type="email"],
-    .modal-overlay input[type="tel"],
-    .modal-overlay input[type="url"] {
-      width: 100%;
-      margin-bottom: 15px;
-      padding: 12px 15px;
-      box-sizing: border-box;
-      border: 1px solid #dcdcdc;
-      border-radius: 6px;
-      font-size: 0.95rem;
-      transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    .modal-content form input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 20px;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        box-sizing: border-box;
     }
-    .modal-overlay input[type="text"]:focus,
-    .modal-overlay input[type="email"]:focus,
-    .modal-overlay input[type="tel"]:focus,
-    .modal-overlay input[type="url"]:focus {
-      outline: none;
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 2px rgba(122, 63, 253, 0.2);
-    }
-    .modal-overlay input::placeholder { color: #aaa; opacity: 1; }
-    .modal-overlay button[type="submit"] {
-      width: 100%;
-      padding: 12px 20px;
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.2s ease-in-out, transform 0.1s ease;
-      margin-top: 10px;
-    }
-    .modal-overlay button[type="submit"]:hover { background-color: var(--primary-darker); }
-    .modal-overlay button[type="submit"]:active { transform: scale(0.98); }
-    .modal-overlay button[type="submit"]:disabled {
-        background-color: #ccc;
-        cursor: not-allowed;
+    .modal-content form button {
+        width: 100%;
     }
     .modal-message {
-        padding: 10px;
-        margin-top: 15px;
+        padding: 15px;
         border-radius: 5px;
-        text-align: center;
+        margin-bottom: 20px;
         display: none;
+        text-align: center;
     }
     .modal-message.success {
-        background-color: #e6ffed;
+        background-color: #e8f5e9;
         color: var(--success-color);
         border: 1px solid var(--success-color);
     }
@@ -353,6 +254,7 @@
         color: var(--error-color);
         border: 1px solid var(--error-color);
     }
+    
     /* NEW: Styles for the custom Vapi floating button */
     .vapi-button {
       position: fixed;
@@ -394,101 +296,76 @@
     .vapi-button.active .vapi-icon.stop {
         display: block;
     }
+
     @media (max-width: 992px) {
         .hero-section .main-page-heading { font-size: 2.4rem; }
-        .hero-section .main-page-subheading { font-size: 1.15rem; }
+        .hero-section .hero-subheading { font-size: 1.1rem; }
+        header.page-header .logo-icon { font-size: 2rem; }
+        header.page-header h1.site-title { font-size: 1.8rem; }
     }
     @media (max-width: 768px) {
-        header.page-header h1.site-title { font-size: 1.8rem; }
         .hero-section .main-page-heading { font-size: 2rem; }
-        .hero-section .main-page-subheading { font-size: 1.1rem; }
-        section h2.section-title { font-size: 1.6rem; }
-        .container { width: 95%; }
-        .info-grid { grid-template-columns: 1fr; }
+        .hero-section .hero-subheading { font-size: 1rem; }
     }
   </style>
 </head>
 <body>
-
   <header class="page-header">
     <div class="container">
       <div class="logo-container">
-          <span class="logo-icon">🐾</span>
-          <h1 class="site-title">BAGIRA AI</h1>
+        <i class="fas fa-paw logo-icon"></i>
+        <h1 class="site-title">Bagira AI</h1>
       </div>
-      <p class="tagline">Интеллектуальная автоматизация для современных юридических фирм</p>
+      <p class="tagline">Интеллектуальный ассистент для юридических фирм</p>
     </div>
   </header>
 
-  <section class="hero-section">
-      <div class="container">
-          <h1 class="main-page-heading">Bagira AI: революция в привлечении клиентов для вашей юридической фирмы</h1>
-          <p class="main-page-subheading">Наш интеллектуальный ассистент круглосуточно обрабатывает запросы, квалифицирует потенциальных клиентов и назначает консультации, освобождая ваше время для юридической практики.</p>
-          <button id="joinPilotBtnHero" class="btn btn-primary" style="background-color: #FFD240; color: var(--primary-darker);">Присоединиться к пилотной программе</button>
-          
-          <div class="video-responsive-wrapper">
-              <iframe 
-                  src="https://www.youtube.com/embed/U-Ko2DSn3q4?autoplay=0&rel=0" 
-                  title="Видео о Bagira AI" 
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                  allowfullscreen>
-              </iframe>
-          </div>
-      </div>
-  </section>
-
   <main>
-    <section class="problems-section">
-        <div class="container">
-            <h2 class="section-title">Решите проблемы привлечения клиентов в вашей фирме</h2>
-            <p class="section-subtitle">Традиционные методы привлечения клиентов устарели. Bagira AI решает ключевые болевые точки.</p>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="item-icon"><i class="fas fa-user-clock"></i></span>
-                    <h3>Задержки с ответом ведут к потере клиентов</h3>
-                    <p>Потенциальные клиенты ожидают немедленного взаимодействия. Задержки означают, что они уходят к вашим конкурентам.</p>
-                </div>
-                <div class="info-item">
-                    <span class="item-icon"><i class="fas fa-microphone-slash"></i></span>
-                    <h3>Безличный первый контакт не конвертирует</h3>
-                    <p>Голосовая почта и стандартные колл-центры лишены юридического контекста и не могут эффективно выстроить доверие или квалифицировать лидов.</p>
-                </div>
-                <div class="info-item">
-                    <span class="item-icon"><i class="fas fa-folder-minus"></i></span>
-                    <h3>Неэффективные процессы истощают ресурсы</h3>
-                    <p>Ручная проверка лидов и планирование встреч отнимают ценное время, которое можно было бы потратить на юридическую работу.</p>
-                </div>
-            </div>
-        </div>
+    <section class="hero-section">
+      <div class="container">
+        <h2 class="main-page-heading">Освободите до 80% времени ваших юристов от рутинных задач</h2>
+        <p class="hero-subheading">
+          Bagira AI берет на себя первичную консультацию, квалификацию лидов и запись на прием, позволяя вашим специалистам сфокусироваться на клиентах.
+        </p>
+        <a href="#pilot-section" class="btn btn-primary">Узнать больше</a>
+      </div>
     </section>
 
     <section class="features-section">
+      <div class="container">
+        <h2 class="section-heading">Как Bagira AI помогает вашему бизнесу</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-headset"></i></div>
+            <h3>Автоматизация первого контакта</h3>
+            <p>Bagira AI круглосуточно отвечает на звонки и сообщения, проводит первичную консультацию по вашему скрипту и собирает контактные данные.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-user-check"></i></div>
+            <h3>Квалификация лидов</h3>
+            <p>Наш ассистент задает правильные вопросы, чтобы определить перспективность клиента и передать вашим юристам только целевые заявки.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-calendar-alt"></i></div>
+            <h3>Интеграция с календарем</h3>
+            <p>Bagira AI автоматически проверяет свободные слоты и записывает клиентов на консультацию прямо в ваш рабочий календарь.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pilot-section" class="pilot-section">
         <div class="container">
-            <h2 class="section-title">Расширьте возможности вашей фирмы с Bagira AI</h2>
-            <p class="section-subtitle">Оптимизируйте процесс привлечения клиентов, улучшите скорость ответа и освободите вашу команду для оплачиваемой работы.</p>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="item-icon"><i class="fas fa-comments"></i></span>
-                    <h3>Мгновенная квалификация лидов</h3>
-                    <p>Привлекайте посетителей сайта немедленно, задавайте квалифицирующие вопросы и выявляйте высокопотенциальных лидов 24/7.</p>
-                </div>
-                <div class="info-item">
-                    <span class="item-icon"><i class="fas fa-calendar-check"></i></span>
-                    <h3>Автоматическая запись на консультацию</h3>
-                    <p>Беспрепятственно записывайте квалифицированных лидов на первичные консультации прямо в календарь вашей фирмы согласно вашей доступности.</p>
-                </div>
-                <div class="info-item">
-                    <span class="item-icon"><i class="fas fa-clock"></i></span>
-                    <h3>Никогда не упускайте возможность</h3>
-                    <p>Собирайте лидов и оказывайте первичную поддержку даже в нерабочее время, гарантируя, что ни один потенциальный клиент не будет проигнорирован.</p>
-                </div>
-            </div>
+            <h2 class="section-heading">Запустите пилотный проект бесплатно</h2>
+            <p>
+                Мы предлагаем вам бесплатно настроить и запустить Bagira AI для вашей компании. Оцените, как искусственный интеллект может трансформировать вашу работу с клиентами, увеличить конверсию и снизить нагрузку на персонал.
+            </p>
+            <button id="joinPilotBtnHero" class="btn btn-primary">Присоединиться к пилоту</button>
         </div>
     </section>
 
-    <!-- UPDATED: This section is now styled to be a full-width band -->
     <section class="cta-vapi-section">
-      <div class="container"> <!-- Container still centers the content -->
+      <div class="container">
         <h3>Попробуйте Bagira AI в действии</h3>
         <p>
           Узнайте, как Bagira AI взаимодействует с потенциальными клиентами. Нажмите на иконку микрофона и запишитесь на консультацию.
@@ -499,47 +376,40 @@
 
   <footer class="page-footer">
     <div class="container">
-      <p>© <span id="currentYear"></span> Bagira AI. Все права защищены.</p>
-      <!-- The year will be inserted here by JS -->
+      &copy; <span id="currentYear"></span> Bagira AI. Все права защищены.
     </div>
   </footer>
 
-  <!-- MODAL 1: VAPI Client Booking Confirmation -->
-  <div id="bagiraFormModal" class="modal-overlay">
+  <!-- Pilot Program Modal -->
+  <div id="pilotFormModal" class="modal">
     <div class="modal-content">
-      <button id="closeBagiraModal" class="modal-close-btn" aria-label="Закрыть">×</button>
-      <div id="bagiraModalHeader" class="modal-header-title">
-        Пожалуйста, укажите ваши данные для подтверждения записи.
-      </div>
-      <form id="bagiraForm">
-        <input type="hidden" id="clientSessionId" name="clientSessionId" value="">
-        <label for="phoneInput">Номер телефона:</label>
-        <input type="tel" id="phoneInput" required placeholder="+7 (XXX) XXX-XX-XX">
-
-        <label for="emailInput">Электронная почта:</label>
-        <input type="email" id="emailInput" required placeholder="you@example.com">
-        
-        <button type="submit">Отправить данные</button>
-      </form>
+        <span id="closePilotModal" class="close-button">&times;</span>
+        <h2>Заявка на участие в пилотном проекте</h2>
+        <form id="pilotProgramForm">
+            <label for="pilotName">Ваше имя:</label>
+            <input type="text" id="pilotName" required>
+            <label for="pilotCompanyName">Название компании:</label>
+            <input type="text" id="pilotCompanyName" required>
+            <label for="pilotWebsite">Сайт компании:</label>
+            <input type="text" id="pilotWebsite" required>
+            <button type="submit" id="submitPilotForm" class="btn btn-primary">Отправить заявку</button>
+        </form>
+        <div id="pilotFormMessage" class="modal-message"></div>
     </div>
   </div>
 
-  <!-- MODAL 2: Pilot Program Signup -->
-  <div id="pilotFormModal" class="modal-overlay">
+  <!-- Bagira Client Form Modal -->
+  <div id="bagiraFormModal" class="modal">
     <div class="modal-content">
-        <button id="closePilotModal" class="modal-close-btn" aria-label="Закрыть">×</button>
-        <div class="modal-header-title">Присоединиться к пилотной программе Bagira AI</div>
-        <form id="pilotProgramForm">
-            <label for="pilotName">Ваше имя:</label>
-            <input type="text" id="pilotName" name="name" required placeholder="например, Иван Иванов">
-
-            <label for="pilotCompanyName">Название компании:</label>
-            <input type="text" id="pilotCompanyName" name="companyName" required placeholder="например, ООО «Юридические Решения»">
-
-            <label for="pilotWebsite">Сайт компании:</label>
-            <input type="url" id="pilotWebsite" name="website" required placeholder="https://www.examplelaw.ru">
-
-            <button type="submit" id="submitPilotForm">Отправить заявку</button>
+        <span id="closeBagiraModal" class="close-button">&times;</span>
+        <h2 id="bagiraModalHeader">Подтверждение записи</h2>
+        <form id="bagiraForm">
+            <input type="hidden" id="clientSessionId" name="clientSessionId" value="">
+            <label for="phoneInput">Номер телефона:</label>
+            <input type="tel" id="phoneInput" required placeholder="+7 (XXX) XXX-XX-XX">
+            <label for="emailInput">Email:</label>
+            <input type="email" id="emailInput" required placeholder="example@email.com">
+            <button type="submit" class="btn btn-primary">Отправить данные</button>
         </form>
         <div id="pilotFormMessage" class="modal-message"></div>
     </div>
@@ -620,7 +490,6 @@
     if (pilotProgramForm) {
       pilotProgramForm.addEventListener("submit", function (e) {
         e.preventDefault();
-        // (Your existing pilot form submission logic remains here)
         if(pilotFormMessage) pilotFormMessage.style.display = "none";
         if(submitPilotFormBtn) {
             submitPilotFormBtn.disabled = true;
@@ -672,7 +541,6 @@
     if(bagiraClientForm) {
       bagiraClientForm.addEventListener("submit", function(e) {
         e.preventDefault();
-        // (Your existing bagira form submission logic remains here)
         const phone = phoneClientInput.value;
         const email = document.getElementById("emailInput").value;
         const submitButton = bagiraClientForm.querySelector('button[type="submit"]');
@@ -707,11 +575,14 @@
       });
     }
 
-    // --- VAPI LOGIC ---
+    // --- Vapi Specific Logic ---
     vapiButton.addEventListener('click', () => {
       if (isCallActive) {
         vapi.stop();
       } else {
+        // FINAL CORRECTED VERSION based on official VAPI documentation.
+        // The first argument is the assistant/squad ID.
+        // The second is an overrides object.
         vapi.start(vapiSquadId, {
           variableValues: { clientSessionId: clientSessionId }
         });
