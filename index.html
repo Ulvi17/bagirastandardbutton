@@ -712,11 +712,8 @@
       if (isCallActive) {
         vapi.stop();
       } else {
-        vapi.start({
-          assistantId: vapiSquadId,
-          sessionId: clientSessionId,
-          variableValues: { clientSessionId: clientSessionId },
-          metadata: { clientSessionId: clientSessionId }
+        vapi.start(vapiSquadId, {
+          variableValues: { clientSessionId: clientSessionId }
         });
       }
     });
