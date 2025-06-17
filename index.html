@@ -471,7 +471,6 @@
         Пожалуйста, укажите ваши данные для подтверждения записи.
       </div>
       <form id="bagiraForm">
-        <input type="hidden" id="websiteSessionId" name="websiteSessionId" value="">
         <label for="phoneInput">Номер телефона:</label>
         <input type="tel" id="phoneInput" required placeholder="+7 (XXX) XXX-XX-XX">
 
@@ -509,17 +508,6 @@
     // This will now run after the #currentYear element is loaded
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-    // Generate a unique session ID for this browser session, persisting it in localStorage.
-    let websiteSessionId = localStorage.getItem('websiteSessionId');
-    if (!websiteSessionId) {
-      websiteSessionId = crypto.randomUUID();
-      localStorage.setItem('websiteSessionId', websiteSessionId);
-    }
-    console.log(`Using persistent websiteSessionId: ${websiteSessionId}`);
-
-    // Set the hidden input's value for form submission
-    document.getElementById('websiteSessionId').value = websiteSessionId;
-
     var vapiInstance = null;
     const apiKey = "58f89212-0e94-4123-8f9e-3bc0dde56fe0";
     const vapiSquadId = "541e48cf-1f4a-423b-875f-889c6917a56d";
@@ -534,9 +522,6 @@
         vapiInstance = window.vapiSDK.run({
           apiKey: apiKey,
           squad: vapiSquadId,
-          variables: {
-            clientSessionId: websiteSessionId
-          },
           config: {
             position: "bottom-right",
             idle: { color: "#7A3FFD", type: "pill", title: "Поговорить с Bagira AI", subtitle: "Голосовой юр. помощник", icon: "https://unpkg.com/lucide-static@0.321.0/icons/mic.svg" }
@@ -581,16 +566,17 @@
               submitButton.disabled = true;
               submitButton.textContent = "Отправка...";
 
+              // The payload no longer needs a manually passed ID.
               const payload = {
                 phone: phone,
-                email: email,
-                websiteSessionId: websiteSessionId 
+                email: email
               };
 
-              console.log("Sending to webhook:", payload);
+              console.log("Sending to webhook (cookie should be included by browser):", payload);
 
-              fetch("https://primary-production-3672.up.railway.app/webhook/bagira-submit", {
+              fetch("https://primary-production-3672.up.railway.app/webhook/91464858-2916-4483-a065-6c43e8e23176", {
                 method: "POST", 
+                credentials: "include", // <-- CRUCIAL: Instructs browser to send cookies.
                 headers: { "Content-Type": "application/json" }, 
                 body: JSON.stringify(payload)
               })
