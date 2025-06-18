@@ -201,18 +201,59 @@
         margin-bottom: 0;
     }
 
-    #startVapiCallBtn {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 1000;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 12px 20px;
+    /* --- CSS Configuration for the Custom Vapi Button --- */
+    .vapi-button {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      width: 65px;
+      height: 65px;
+      background-color: var(--primary-color);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+      z-index: 9999;
+      border: none;
+      outline: none;
     }
-    #startVapiCallBtn.incall {
-        background-color: var(--error-color) !important;
+
+    .vapi-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .vapi-button .vapi-icon {
+      color: white;
+      font-size: 26px;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      position: absolute; /* Allows smooth cross-fade */
+    }
+
+    /* Idle State: Show Microphone, Hide Stop Icon */
+    .vapi-button .fa-microphone {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .vapi-button .fa-phone-slash {
+      opacity: 0;
+      transform: scale(0);
+    }
+
+    /* Active State: Change color, show Stop, Hide Microphone */
+    .vapi-button.active {
+      background-color: var(--error-color);
+    }
+    .vapi-button.active .fa-microphone {
+      opacity: 0;
+      transform: scale(0);
+    }
+    .vapi-button.active .fa-phone-slash {
+      opacity: 1;
+      transform: scale(1);
     }
 
     /* UPDATED: CTA VAPI Section for full width band */
@@ -470,9 +511,9 @@
     </section>
   </main>
 
-  <button id="startVapiCallBtn" class="btn btn-primary">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mic"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
-    <span id="vapiBtnText">Поговорить с Bagira AI</span>
+  <button id="vapi-button" class="vapi-button" aria-label="Start Voice Assistant">
+    <i class="fas fa-microphone vapi-icon"></i>
+    <i class="fas fa-phone-slash vapi-icon"></i>
   </button>
 
   <footer class="page-footer">
@@ -490,6 +531,7 @@
         Пожалуйста, укажите ваши данные для подтверждения записи.
       </div>
       <form id="bagiraForm">
+        <input type="hidden" id="clientSessionId" name="clientSessionId" value="">
         <label for="phoneInput">Номер телефона:</label>
         <input type="tel" id="phoneInput" required placeholder="+7 (XXX) XXX-XX-XX">
 
@@ -524,50 +566,78 @@
 
   <!-- SCRIPT MOVED TO THE END OF BODY -->
   <script type="module">
+    // Use the modern, reliable Vapi SDK from a trusted CDN
     import Vapi from 'https://esm.sh/@vapi-ai/web';
 
-    // This will now run after the #currentYear element is loaded
-    document.getElementById('currentYear').textContent = new Date().getFullYear();
+    // --- Configuration ---
+    const VAPI_PUBLIC_KEY = "58f89212-0e94-4123-8f9e-3bc0dde56fe0";
+    const VAPI_SQUAD_ID = "541e48cf-1f4a-423b-875f-889c6917a56d"; // Your Squad ID
 
-    const apiKey = "58f89212-0e94-4123-8f9e-3bc0dde56fe0";
-    const vapiSquadId = "541e48cf-1f4a-423b-875f-889c6917a56d";
-    const vapi = new Vapi(apiKey);
+    // --- Initialize Vapi ---
+    const vapi = new Vapi(VAPI_PUBLIC_KEY);
 
-    const startBtn = document.getElementById("startVapiCallBtn");
-    const vapiBtnText = document.getElementById("vapiBtnText");
-    
-    vapi.on('call-start', () => {
-      console.log('Call has started.');
-      vapiBtnText.textContent = 'Завершить звонок';
-      startBtn.classList.add('incall');
-    });
-
-    vapi.on('call-end', () => {
-      console.log('Call has ended.');
-      vapiBtnText.textContent = 'Поговорить с Bagira AI';
-      startBtn.classList.remove('incall');
-    });
-
-    startBtn.addEventListener('click', () => {
-      const isCallActive = startBtn.classList.contains('incall');
-      if (isCallActive) {
-        vapi.stop();
-      } else {
-        vapi.start({ squad: vapiSquadId });
-      }
-    });
-
+    // --- Get HTML Elements ---
+    const vapiButton = document.getElementById('vapi-button');
     const bagiraModal = document.getElementById("bagiraFormModal");
     const bagiraClientForm  = document.getElementById("bagiraForm");
     const closeBagiraModalBtn = document.getElementById("closeBagiraModal");
     const phoneClientInput = document.getElementById("phoneInput");
     const bagiraModalHeader = document.getElementById("bagiraModalHeader");
 
-    // This listener now ONLY handles triggering the pop-up.
+    // --- State Management ---
+    let isCallActive = false;
+    let clientSessionId = null; // To hold the ID for the form submission
+
+    // --- Core Vapi Logic ---
+
+    // Single click handler for the button
+    vapiButton.addEventListener('click', () => {
+      if (isCallActive) {
+        vapi.stop(); // If call is active, stop it.
+      } else {
+        // Generate a unique ID for this specific session
+        clientSessionId = crypto.randomUUID();
+        console.log(`Starting call with clientSessionId: ${clientSessionId}`);
+
+        // Set the hidden input's value in your form for later submission
+        const hiddenInput = document.getElementById('clientSessionId');
+        if (hiddenInput) {
+            hiddenInput.value = clientSessionId;
+        }
+
+        // Call the Vapi Squad and pass the session ID in the metadata
+        vapi.start(VAPI_SQUAD_ID, {
+          metadata: {
+            clientSessionId: clientSessionId
+          }
+        });
+      }
+    });
+
+    // --- Vapi Event Listeners to Update Button State ---
+
+    vapi.on('call-start', () => {
+      console.log('Call has started.');
+      isCallActive = true;
+      vapiButton.classList.add('active');
+    });
+
+    vapi.on('call-end', () => {
+      console.log('Call has ended.');
+      isCallActive = false;
+      vapiButton.classList.remove('active');
+    });
+
+    vapi.on('error', (error) => {
+      console.error('An error occurred:', error);
+      isCallActive = false;
+      vapiButton.classList.remove('active');
+    });
+
+    // Logic for opening the modal
     vapi.on("message", (message) => {
       if (message.type === "transcript" && message.role === "assistant" && message.transcriptType === "final" && message.transcript) {
         const assistantUtterance = message.transcript.toLowerCase().trim();
-        console.log("Assistant's final message:", assistantUtterance);
         const coreTriggerPhrase = "please type your phone number below to confirm."; 
         if (assistantUtterance.includes(coreTriggerPhrase)) {
           console.log("Trigger phrase detected! Opening modal.");
@@ -580,6 +650,8 @@
       }
     });
     
+    // --- Form and Modal Logic ---
+
     if(closeBagiraModalBtn) { 
         closeBagiraModalBtn.addEventListener("click", () => { bagiraModal.style.display = "none"; });
     }
@@ -587,6 +659,11 @@
     if(bagiraClientForm) { 
         bagiraClientForm.addEventListener("submit", function(e) {
           e.preventDefault();
+          
+          if (!clientSessionId) {
+            alert("Ошибка: ID сессии не был создан. Пожалуйста, начните звонок перед отправкой формы.");
+            return;
+          }
 
           const phone = phoneClientInput.value;
           const email = document.getElementById("emailInput").value;
@@ -595,17 +672,17 @@
           submitButton.disabled = true;
           submitButton.textContent = "Отправка...";
 
-          // The payload no longer needs a manually passed ID.
           const payload = {
             phone: phone,
-            email: email
+            email: email,
+            clientSessionId: clientSessionId
           };
 
-          console.log("Sending to webhook (cookie should be included by browser):", payload);
+          console.log("Sending to webhook:", payload);
 
-          fetch("https://primary-production-3672.up.railway.app/webhook/91464858-2916-4483-a065-6c43e8e23176", {
+          // Note: This webhook URL may need to be different than the cookie one.
+          fetch("https://primary-production-3672.up.railway.app/webhook/bagira-submit", {
             method: "POST", 
-            credentials: "include", // <-- CRUCIAL: Instructs browser to send cookies.
             headers: { "Content-Type": "application/json" }, 
             body: JSON.stringify(payload)
           })
@@ -625,6 +702,9 @@
           });
         });
     }
+
+    // --- Footer and Pilot Program Modal Logic ---
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
 
     const pilotModal = document.getElementById("pilotFormModal");
     const joinPilotBtn = document.getElementById("joinPilotBtnHero");
