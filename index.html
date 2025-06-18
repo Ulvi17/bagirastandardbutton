@@ -201,6 +201,20 @@
         margin-bottom: 0;
     }
 
+    #startVapiCallBtn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+    }
+    #startVapiCallBtn.incall {
+        background-color: var(--error-color) !important;
+    }
+
     /* UPDATED: CTA VAPI Section for full width band */
     .cta-vapi-section {
       background-color: var(--primary-darker);
@@ -456,6 +470,11 @@
     </section>
   </main>
 
+  <button id="startVapiCallBtn" class="btn btn-primary">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mic"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+    <span id="vapiBtnText">Поговорить с Bagira AI</span>
+  </button>
+
   <footer class="page-footer">
     <div class="container">
       <p>© <span id="currentYear"></span> Bagira AI. Все права защищены.</p>
@@ -504,100 +523,108 @@
   </div>
 
   <!-- SCRIPT MOVED TO THE END OF BODY -->
-  <script>
+  <script type="module">
+    import Vapi from 'https://esm.sh/@vapi-ai/web';
+
     // This will now run after the #currentYear element is loaded
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-    var vapiInstance = null;
     const apiKey = "58f89212-0e94-4123-8f9e-3bc0dde56fe0";
     const vapiSquadId = "541e48cf-1f4a-423b-875f-889c6917a56d";
+    const vapi = new Vapi(apiKey);
 
-    (function (d, t) {
-      var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
-      g.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
-      g.defer = g.async = true;
-      s.parentNode.insertBefore(g, s);
+    const startBtn = document.getElementById("startVapiCallBtn");
+    const vapiBtnText = document.getElementById("vapiBtnText");
+    
+    vapi.on('call-start', () => {
+      console.log('Call has started.');
+      vapiBtnText.textContent = 'Завершить звонок';
+      startBtn.classList.add('incall');
+    });
 
-      g.onload = function () {
-        vapiInstance = window.vapiSDK.run({
-          apiKey: apiKey,
-          squad: vapiSquadId,
-          config: {
-            position: "bottom-right",
-            idle: { color: "#7A3FFD", type: "pill", title: "Поговорить с Bagira AI", subtitle: "Голосовой юр. помощник", icon: "https://unpkg.com/lucide-static@0.321.0/icons/mic.svg" }
+    vapi.on('call-end', () => {
+      console.log('Call has ended.');
+      vapiBtnText.textContent = 'Поговорить с Bagira AI';
+      startBtn.classList.remove('incall');
+    });
+
+    startBtn.addEventListener('click', () => {
+      const isCallActive = startBtn.classList.contains('incall');
+      if (isCallActive) {
+        vapi.stop();
+      } else {
+        vapi.start({ squad: vapiSquadId });
+      }
+    });
+
+    const bagiraModal = document.getElementById("bagiraFormModal");
+    const bagiraClientForm  = document.getElementById("bagiraForm");
+    const closeBagiraModalBtn = document.getElementById("closeBagiraModal");
+    const phoneClientInput = document.getElementById("phoneInput");
+    const bagiraModalHeader = document.getElementById("bagiraModalHeader");
+
+    // This listener now ONLY handles triggering the pop-up.
+    vapi.on("message", (message) => {
+      if (message.type === "transcript" && message.role === "assistant" && message.transcriptType === "final" && message.transcript) {
+        const assistantUtterance = message.transcript.toLowerCase().trim();
+        console.log("Assistant's final message:", assistantUtterance);
+        const coreTriggerPhrase = "please type your phone number below to confirm."; 
+        if (assistantUtterance.includes(coreTriggerPhrase)) {
+          console.log("Trigger phrase detected! Opening modal.");
+          if (bagiraModal.style.display !== "flex") {
+            bagiraModal.style.display = "flex";
+            phoneClientInput.focus();
+            bagiraModalHeader.textContent = "Пожалуйста, введите ваш телефон и email для подтверждения записи.";
           }
-        });
-
-        const bagiraModal = document.getElementById("bagiraFormModal");
-        const bagiraClientForm  = document.getElementById("bagiraForm");
-        const closeBagiraModalBtn = document.getElementById("closeBagiraModal");
-        const phoneClientInput = document.getElementById("phoneInput");
-        const bagiraModalHeader = document.getElementById("bagiraModalHeader");
-
-        // This listener now ONLY handles triggering the pop-up.
-        vapiInstance.on("message", (message) => {
-          if (message.type === "transcript" && message.role === "assistant" && message.transcriptType === "final" && message.transcript) {
-            const assistantUtterance = message.transcript.toLowerCase().trim();
-            console.log("Assistant's final message:", assistantUtterance);
-            const coreTriggerPhrase = "please type your phone number below to confirm."; 
-            if (assistantUtterance.includes(coreTriggerPhrase)) {
-              console.log("Trigger phrase detected! Opening modal.");
-              if (bagiraModal.style.display !== "flex") {
-                bagiraModal.style.display = "flex";
-                phoneClientInput.focus();
-                bagiraModalHeader.textContent = "Пожалуйста, введите ваш телефон и email для подтверждения записи.";
-              }
-            }
-          }
-        });
-        
-        if(closeBagiraModalBtn) { 
-            closeBagiraModalBtn.addEventListener("click", () => { bagiraModal.style.display = "none"; });
         }
+      }
+    });
+    
+    if(closeBagiraModalBtn) { 
+        closeBagiraModalBtn.addEventListener("click", () => { bagiraModal.style.display = "none"; });
+    }
 
-        if(bagiraClientForm) { 
-            bagiraClientForm.addEventListener("submit", function(e) {
-              e.preventDefault();
+    if(bagiraClientForm) { 
+        bagiraClientForm.addEventListener("submit", function(e) {
+          e.preventDefault();
 
-              const phone = phoneClientInput.value;
-              const email = document.getElementById("emailInput").value;
-              const submitButton = bagiraClientForm.querySelector('button[type="submit"]');
-              const originalButtonText = "Отправить данные";
-              submitButton.disabled = true;
-              submitButton.textContent = "Отправка...";
+          const phone = phoneClientInput.value;
+          const email = document.getElementById("emailInput").value;
+          const submitButton = bagiraClientForm.querySelector('button[type="submit"]');
+          const originalButtonText = "Отправить данные";
+          submitButton.disabled = true;
+          submitButton.textContent = "Отправка...";
 
-              // The payload no longer needs a manually passed ID.
-              const payload = {
-                phone: phone,
-                email: email
-              };
+          // The payload no longer needs a manually passed ID.
+          const payload = {
+            phone: phone,
+            email: email
+          };
 
-              console.log("Sending to webhook (cookie should be included by browser):", payload);
+          console.log("Sending to webhook (cookie should be included by browser):", payload);
 
-              fetch("https://primary-production-3672.up.railway.app/webhook/91464858-2916-4483-a065-6c43e8e23176", {
-                method: "POST", 
-                credentials: "include", // <-- CRUCIAL: Instructs browser to send cookies.
-                headers: { "Content-Type": "application/json" }, 
-                body: JSON.stringify(payload)
-              })
-              .then(response => {
-                if (response.ok) { alert("Спасибо! Мы скоро направим информацию по указанному номеру телефона или почте"); }
-                else { alert("Ошибка отправки. ❌ Пожалуйста, попробуйте еще раз или свяжитесь с поддержкой."); }
-                bagiraModal.style.display = "none";
-                bagiraClientForm.reset(); 
-              })
-              .catch(error => {
-                console.error("Ошибка отправки формы Bagira AI:", error);
-                alert("Что-то пошло не так. ❌\n" + (error.message || error));
-              })
-              .finally(() => {
-                submitButton.disabled = false;
-                submitButton.textContent = originalButtonText;
-              });
-            });
-        }
-      };
-    })(document, "script");
+          fetch("https://primary-production-3672.up.railway.app/webhook/91464858-2916-4483-a065-6c43e8e23176", {
+            method: "POST", 
+            credentials: "include", // <-- CRUCIAL: Instructs browser to send cookies.
+            headers: { "Content-Type": "application/json" }, 
+            body: JSON.stringify(payload)
+          })
+          .then(response => {
+            if (response.ok) { alert("Спасибо! Мы скоро направим информацию по указанному номеру телефона или почте"); }
+            else { alert("Ошибка отправки. ❌ Пожалуйста, попробуйте еще раз или свяжитесь с поддержкой."); }
+            bagiraModal.style.display = "none";
+            bagiraClientForm.reset(); 
+          })
+          .catch(error => {
+            console.error("Ошибка отправки формы Bagira AI:", error);
+            alert("Что-то пошло не так. ❌\n" + (error.message || error));
+          })
+          .finally(() => {
+            submitButton.disabled = false;
+            submitButton.textContent = originalButtonText;
+          });
+        });
+    }
 
     const pilotModal = document.getElementById("pilotFormModal");
     const joinPilotBtn = document.getElementById("joinPilotBtnHero");
