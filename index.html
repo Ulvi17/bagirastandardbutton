@@ -623,11 +623,11 @@
             vapi.stop();
         } else {
             clientSessionId = crypto.randomUUID(); // Create a new ID for this session
-            const launchParams = {
-                squadId: VAPI_SQUAD_ID,
-                metadata: { clientSessionId }
-            };
-            vapi.start(launchParams);
+            const ASSISTANT_ID = "4c5c9cf8-2001-4566-8c65-8318b8814db4";
+            vapi.start(
+              ASSISTANT_ID,                          // assistantId
+              { metadata: { clientSessionId } }      // assistant overrides containing metadata
+            );
             pollInitIds(); // Start polling immediately after the call starts
         }
     });
