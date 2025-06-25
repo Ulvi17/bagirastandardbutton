@@ -681,7 +681,7 @@
           console.log("Sending to webhook:", payload);
 
           // Note: This webhook URL may need to be different than the cookie one.
-          fetch("https://primary-production-3672.up.railway.app/webhook/bagira-submit", {
+          fetch("http://localhost:5678/webhook/d52d0afd-aed3-49fd-9b3d-a9549eabd063", {
             method: "POST", 
             headers: { "Content-Type": "application/json" }, 
             body: JSON.stringify(payload)
