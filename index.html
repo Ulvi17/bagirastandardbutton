@@ -592,11 +592,10 @@
     /* ---------- pull callId from n8n ---------- */
     async function pollInitIds () {
       try {
-        const r = await fetch(`${API_BASE}/webhook/getInitIds?session=${clientSessionId}`);
+        const r = await fetch('https://primary-production-6b87e.up.railway.app/webhook/getInitIds?session=' + clientSessionId);
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const { callId } = await r.json();
         if (callId) {
-          sessionStorage.setItem("callId", callId);
           hiddenInput.value = callId;
           return callId;
         }
@@ -624,17 +623,16 @@
     /* ---------- send phone/email + callId to n8n ---------- */
     form.onsubmit = async (e) => {
       e.preventDefault();
-      const payload = {
-        phone:  document.getElementById("phoneInput").value,
-        email:  document.getElementById("emailInput").value,
-        callId: hiddenInput.value
-      };
+      const formData = new FormData(form); // includes phone, email, callId
+
       try {
-        await fetch(`${API_BASE}/webhook/toolCall`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+        await fetch(
+          "https://primary-production-6b87e.up.railway.app/webhook/toolCall",
+          {
+            method: "POST",
+            body: formData
+          }
+        );
         alert("Спасибо! Данные отправлены.");
         closePopup();
         form.reset();
