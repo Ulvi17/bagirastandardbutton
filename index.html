@@ -564,164 +564,78 @@
     </div>
   </div>
 
-  <!-- SCRIPT MOVED TO THE END OF BODY -->
+  <!-- VAPI + n8n integration snippet -->
+  <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web/dist/web.js"></script>
   <script type="module">
-    // Use the modern, reliable Vapi SDK from a trusted CDN
-    import Vapi from 'https://esm.sh/@vapi-ai/web';
+    import Vapi from "https://cdn.jsdelivr.net/npm/@vapi-ai/web/dist/web.js";
 
-    // --- Configuration ---
-    const VAPI_PUBLIC_KEY = "58f89212-0e94-4123-8f9e-3bc0dde56fe0";
-    const VAPI_SQUAD_ID = "541e48cf-1f4a-423b-875f-889c6917a56d";
+    /* ---------- constants ---------- */
+    const API_BASE = "https://primary-production-6b87e.up.railway.app";   // your n8n instance
+    const vapi     = new Vapi("58f89212-0e94-4123-8f9e-3bc0dde56fe0");   // ← public key
+    const clientSessionId = crypto.randomUUID();                            // unique per visit
 
-    // --- Initialize Vapi ---
-    const vapi = new Vapi(VAPI_PUBLIC_KEY);
+    /* ---------- DOM helpers ---------- */
+    const callBtn        = document.getElementById("vapi-button");
+    const form           = document.getElementById("bagiraForm");
+    const hiddenInput    = document.getElementById("callIdInput");
+    const bagiraModal    = document.getElementById("bagiraFormModal");
 
-    // --- Get HTML Elements ---
-    const vapiButton = document.getElementById('vapi-button');
-    const bagiraModal = document.getElementById("bagiraFormModal");
-    const bagiraClientForm = document.getElementById("bagiraForm");
-    const closeBagiraModalBtn = document.getElementById("closeBagiraModal");
-    const phoneClientInput = document.getElementById("phoneInput");
-    const bagiraModalHeader = document.getElementById("bagiraModalHeader");
+    const openPopup  = () => bagiraModal.style.display = "flex";
+    const closePopup = () => bagiraModal.style.display = "none";
 
-    // --- State Management ---
-    let isCallActive = false;
-    let callId = null; // Scoped variable to hold the ID from the backend
-    let clientSessionId = null; // Used to link the frontend session with the polling request
+    /* ---------- start call with SINGLE assistant ---------- */
+    callBtn.onclick = () =>
+      vapi.start(
+        "51047be1-d65e-4653-9cd7-2c08acfbe3cd",   // assistantId
+        { metadata: { clientSessionId } }
+      );
 
-    // --- Core Vapi & Polling Logic ---
-    
-    // ❶ Function to poll the backend for the callId
-    async function pollInitIds() {
-        if (!clientSessionId) return;
-        console.log(`Polling for callId with session: ${clientSessionId}`);
-        try {
-            // This endpoint must be created on your backend.
-            // It should wait for the Vapi webhook triggered by the call,
-            // find the callId associated with our clientSessionId, and return it.
-            const response = await fetch(`/getInitIds?session=${clientSessionId}`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.callId) {
-                    callId = data.callId;
-                    sessionStorage.setItem("callId", callId);
-                    console.log(`Successfully fetched and stored callId: ${callId}`);
-                } else {
-                    console.warn("Polling response did not contain a callId.");
-                }
-            } else {
-                console.error(`Polling for callId failed with status: ${response.status}`);
-            }
-        } catch (error) {
-            console.error("Error during polling for callId:", error);
+    /* ---------- pull callId from n8n ---------- */
+    async function pollInitIds () {
+      try {
+        const r = await fetch(`${API_BASE}/webhook/getInitIds?session=${clientSessionId}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const { callId } = await r.json();
+        if (callId) {
+          sessionStorage.setItem("callId", callId);
+          hiddenInput.value = callId;
+          return callId;
         }
+      } catch (err) {
+        console.warn("pollInitIds:", err);
+      }
     }
 
-    // ❷ Single click handler for the call button
-    vapiButton.addEventListener('click', () => {
-        if (isCallActive) {
-            vapi.stop();
-        } else {
-            clientSessionId = crypto.randomUUID(); // Create a new ID for this session
-            const ASSISTANT_ID = "51047be1-d65e-4653-9cd7-2c08acfbe3cd";
-            vapi.start(
-              ASSISTANT_ID,                          // assistantId
-              { metadata: { clientSessionId } }      // assistant overrides containing metadata
-            );
-            pollInitIds(); // Start polling immediately after the call starts
-        }
-    });
-    
-    // --- Vapi Event Listeners ---
-    
-    vapi.on('call-start', () => {
-        console.log('Call has started.');
-        isCallActive = true;
-        vapiButton.classList.add('active');
+    /* ---------- trigger pop-up on assistant phrase ---------- */
+    vapi.on("message", async (e) => {
+      if (e?.data?.message?.text?.includes("Please type your phone number below to confirm.")) {
+        await pollInitIds();          // ensure callId received first
+        openPopup();
+      }
     });
 
-    vapi.on('call-end', () => {
-        console.log('Call has ended.');
-        isCallActive = false;
-        vapiButton.classList.remove('active');
-        clientSessionId = null; // Reset session ID on call end
-        callId = null;
-    });
-
-    vapi.on('error', (error) => {
-        console.error('An error occurred:', error);
-        isCallActive = false;
-        vapiButton.classList.remove('active');
-    });
-
-    // ❸ Open the pop-up when the assistant speaks the trigger phrase
-    vapi.on("message", (message) => {
-        if (message.type === "transcript" && message.role === "assistant" && message.transcriptType === "final" && message.transcript) {
-            const assistantUtterance = message.transcript.toLowerCase().trim();
-            const coreTriggerPhrase = "please type your phone number below to confirm.";
-            if (assistantUtterance.includes(coreTriggerPhrase)) {
-                console.log("Trigger phrase detected! Opening modal.");
-                if (bagiraModal.style.display !== "flex") {
-                    document.querySelector("#callIdInput").value = callId; // Populate hidden field
-                    bagiraModal.style.display = "flex";
-                    phoneClientInput.focus();
-                }
-            }
-        }
-    });
-
-    // --- Form and Modal Logic ---
-
-    if (closeBagiraModalBtn) {
-        closeBagiraModalBtn.addEventListener("click", () => { bagiraModal.style.display = "none"; });
-    }
-
-    if (bagiraClientForm) {
-        bagiraClientForm.addEventListener("submit", function(e) {
-            e.preventDefault();
-
-            const currentCallId = document.getElementById("callIdInput").value;
-            if (!currentCallId) {
-                alert("Ошибка: ID звонка не получен. Пожалуйста, попробуйте снова.");
-                return;
-            }
-
-            const phone = phoneClientInput.value;
-            const email = document.getElementById("emailInput").value;
-            const submitButton = bagiraClientForm.querySelector('button[type="submit"]');
-            const originalButtonText = "Отправить данные";
-            submitButton.disabled = true;
-            submitButton.textContent = "Отправка...";
-
-            const payload = {
-                phone: phone,
-                email: email,
-                callId: currentCallId
-            };
-
-            console.log("Sending form data to webhook:", payload);
-
-            fetch("https://primary-production-6b87e.up.railway.app/webhook/35f58a89-50e7-48e8-a21a-4996fd4d56ec", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            })
-            .then(response => {
-                if (response.ok) { alert("Спасибо! Мы скоро направим информацию по указанному номеру телефона или почте"); } 
-                else { alert("Ошибка отправки. ❌ Пожалуйста, попробуйте еще раз или свяжитесь с поддержкой."); }
-                bagiraModal.style.display = "none";
-                bagiraClientForm.reset();
-            })
-            .catch(error => {
-                console.error("Ошибка отправки формы Bagira AI:", error);
-                alert("Что-то пошло не так. ❌\n" + (error.message || error));
-            })
-            .finally(() => {
-                submitButton.disabled = false;
-                submitButton.textContent = originalButtonText;
-            });
+    /* ---------- send phone/email + callId to n8n ---------- */
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const payload = {
+        phone:  document.getElementById("phoneInput").value,
+        email:  document.getElementById("emailInput").value,
+        callId: hiddenInput.value
+      };
+      try {
+        await fetch(`${API_BASE}/webhook/35f58a89-50e7-48e8-a21a-4996fd4d56ec`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
         });
-    }
+        alert("Спасибо! Данные отправлены.");
+        closePopup();
+        form.reset();
+      } catch (err) {
+        console.error("bagiraForm submit error", err);
+        alert("Ошибка отправки. Попробуйте ещё раз.");
+      }
+    };
 
     // --- Footer and Pilot Program Modal Logic ---
     document.getElementById('currentYear').textContent = new Date().getFullYear();
