@@ -630,7 +630,7 @@
         callId: hiddenInput.value
       };
       try {
-        await fetch(`${API_BASE}/webhook/35f58a89-50e7-48e8-a21a-4996fd4d56ec`, {
+        await fetch(`${API_BASE}/webhook/toolCall`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
