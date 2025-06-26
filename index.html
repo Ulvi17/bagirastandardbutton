@@ -606,9 +606,17 @@
     }
 
     /* ---------- trigger pop-up on assistant phrase ---------- */
-    vapi.on("message", async (e) => {
-      if (e?.data?.message?.text?.includes("Please type your phone number below to confirm.")) {
-        await pollInitIds();          // ensure callId received first
+    const TRIGGER_PHRASE = "please type your phone number below to confirm.";
+
+    vapi.on("message", async (msg) => {
+      if (
+        msg.type === "transcript" &&
+        msg.role === "assistant" &&
+        msg.transcriptType === "final" &&
+        typeof msg.transcript === "string" &&
+        msg.transcript.toLowerCase().includes(TRIGGER_PHRASE)
+      ) {
+        await pollInitIds();          // make sure we have callId first
         openPopup();
       }
     });
