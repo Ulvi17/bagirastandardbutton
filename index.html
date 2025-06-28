@@ -592,7 +592,11 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ping: true })
           }
-        ).then(r => r.json());
+        ).then(async r => {
+          const txt = await r.text();
+          try { return txt ? JSON.parse(txt) : {}; }
+          catch { return {}; }
+        });
         document.querySelector('#callIdInput').value = initIds.callId;
       } catch (err) {
         console.warn('initIds fetch error', err);
