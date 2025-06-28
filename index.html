@@ -582,22 +582,22 @@
     const closePopup = () => bagiraModal.style.display = "none";
 
     /* ---------- start call with SINGLE assistant ---------- */
-    callBtn.onclick = () => vapi.start("51047be1-d65e-4653-9cd7-2c08acfbe3cd");
-
-    /* ---------- pull callId from n8n ---------- */
-    async function pollInitIds () {
+    callBtn.onclick = async () => {
+      vapi.start("51047be1-d65e-4653-9cd7-2c08acfbe3cd");
       try {
-        const r = await fetch('https://primary-production-6b87e.up.railway.app/webhook/getInitIds');
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const { callId } = await r.json();
-        if (callId) {
-          hiddenInput.value = callId;
-          return callId;
-        }
+        const initIds = await fetch(
+          'https://primary-production-6b87e.up.railway.app/webhook/callIntake',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ping: true })
+          }
+        ).then(r => r.json());
+        document.querySelector('#callIdInput').value = initIds.callId;
       } catch (err) {
-        console.warn("pollInitIds:", err);
+        console.warn('initIds fetch error', err);
       }
-    }
+    };
 
     /* ---------- trigger pop-up on assistant phrase ---------- */
     const TRIGGER_PHRASE = "please type your phone number below to confirm.";
@@ -610,7 +610,6 @@
         typeof msg.transcript === "string" &&
         msg.transcript.toLowerCase().includes(TRIGGER_PHRASE)
       ) {
-        await pollInitIds();          // make sure we have callId first
         openPopup();
       }
     });
@@ -731,28 +730,6 @@
         });
     }
   </script>
-
-  <!-- ----------  BEGIN CALL-ID SUBSCRIBER  ---------- -->
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-    /* 1 · Supabase client */
-    const sb = createClient(
-      'https://wirwojaiknnvtpzaxzjv.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpcndvamFpa25udnRwemF4emp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA5NjE3ODcsImV4cCI6MjA2NjUzNzc4N30.XyhklppW2bvJQ7qFv4SWaDaGK_M_YoGFAiOIFo2tW1c'
-    );
-
-    /* 2 · Subscribe once per page-load */
-    sb.channel('bagheera:new-call')
-      .on('broadcast', { event: 'call-created' }, ({ payload }) => {
-          console.log('📞 new callId received', payload.callId);
-          document.querySelector('#callIdInput').value = payload.callId;
-      })
-      .subscribe(status => {
-          if (status === 'SUBSCRIBED') console.log('👂 listening for callIds…');
-      });
-  </script>
-  <!-- ----------   END CALL-ID SUBSCRIBER   ---------- -->
 
 </body>
 </html>
