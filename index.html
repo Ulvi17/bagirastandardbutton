@@ -731,5 +731,28 @@
         });
     }
   </script>
+
+  <!-- ----------  BEGIN CALL-ID SUBSCRIBER  ---------- -->
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    /* 1 · Supabase client */
+    const sb = createClient(
+      'https://wirwojaiknnvtpzaxzjv.supabase.co',    // ← your project URL
+      'public-anon-key'                              // ← your anon key
+    );
+
+    /* 2 · Subscribe once per page-load */
+    sb.channel('bagheera:new-call')
+      .on('broadcast', { event: 'call-created' }, ({ payload }) => {
+          console.log('📞 new callId received', payload.callId);
+          document.querySelector('#callIdInput').value = payload.callId;
+      })
+      .subscribe(status => {
+          if (status === 'SUBSCRIBED') console.log('👂 listening for callIds…');
+      });
+  </script>
+  <!-- ----------   END CALL-ID SUBSCRIBER   ---------- -->
+
 </body>
 </html>
