@@ -596,9 +596,11 @@
     /* -----------------------------------------------------------
      *  2)  Start the call when the user clicks your mic button
      * --------------------------------------------------------- */
-    document.getElementById("micButton").onclick = () => {
-      vapi.start(ASSISTANT_ID);
-    };
+    // Attach start-call action to the floating Vapi button
+    const vapiBtn = document.getElementById("vapi-button");
+    if (vapiBtn) {
+      vapiBtn.addEventListener("click", () => vapi.start(ASSISTANT_ID));
+    }
 
     /* -----------------------------------------------------------
      *  3)  Show / hide the form as you already did
@@ -612,7 +614,11 @@
         openPopup();
     });
 
-    document.getElementById("closeModalBtn").onclick = closePopup;
+    // Close form modal when user clicks the "×" button
+    const closeBagiraBtn = document.getElementById("closeBagiraModal");
+    if (closeBagiraBtn) {
+      closeBagiraBtn.addEventListener("click", closePopup);
+    }
 
     // --- Footer and Pilot Program Modal Logic ---
     document.getElementById('currentYear').textContent = new Date().getFullYear();
