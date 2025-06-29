@@ -567,58 +567,82 @@
   <!-- VAPI + n8n integration snippet -->
   <script type="module">
     import Vapi from "https://esm.sh/@vapi-ai/web";
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-    const API_BASE      = "https://primary-production-6b87e.up.railway.app";
-    const ASSISTANT_ID  = "51047be1-d65e-4653-9cd7-2c08acfbe3cd";
-    const callIdInput   = document.getElementById("callIdInput");   // hidden <input>
-    const bagiraModal   = document.getElementById("bagiraFormModal");   // your popup
+    /* ---------- constants ---------- */
+    const API_BASE = "https://primary-production-6b87e.up.railway.app";   // your n8n instance
+    const vapi     = new Vapi("58f89212-0e94-4123-8f9e-3bc0dde56fe0");   // ← public key
 
-    const vapi = new Vapi("YOUR_PUBLIC_VAPI_KEY");
+    /* ---------- DOM helpers ---------- */
+    const callBtn        = document.getElementById("vapi-button");
+    const form           = document.getElementById("bagiraForm");
+    const hiddenInput    = document.getElementById("callIdInput");
+    const bagiraModal    = document.getElementById("bagiraFormModal");
 
-    /* -----------------------------------------------------------
-     *  1)  Listen for the tool-call that inserts the row
-     * --------------------------------------------------------- */
-    vapi.on("message", async (msg) => {
-      if (msg.type === "function-call" && msg.functionCall?.name === "callIntake") {
-        /*  a) fastest: just take the id that comes with the event  */
-        const callId = msg.call.id;               // <- same id your backend row stores
-        callIdInput.value = callId;
-
-        /*  b) OPTIONAL – verify the row exists before showing form  */
-        // await new Promise(res => setTimeout(res, 800));      // tiny grace period
-        // const { callId } = await fetch(`${API_BASE}/webhook/getInitIds`).then(r => r.json());
-        // if (callId) callIdInput.value = callId;
-
-        console.log("callId captured:", callId);
-      }
-    });
-
-    /* -----------------------------------------------------------
-     *  2)  Start the call when the user clicks your mic button
-     * --------------------------------------------------------- */
-    // Attach start-call action to the floating Vapi button
-    const vapiBtn = document.getElementById("vapi-button");
-    if (vapiBtn) {
-      vapiBtn.addEventListener("click", () => vapi.start(ASSISTANT_ID));
-    }
-
-    /* -----------------------------------------------------------
-     *  3)  Show / hide the form as you already did
-     * --------------------------------------------------------- */
     const openPopup  = () => bagiraModal.style.display = "flex";
     const closePopup = () => bagiraModal.style.display = "none";
 
-    // Your trigger‐phrase listener — unchanged
-    vapi.on("message", (msg) => {
-      if (msg.type === "transcript" && /(?:phone|email)/i.test(msg.transcript))
+    /* ---------- Supabase Realtime subscriber for new callId ---------- */
+    const supabase = createClient(
+      "https://wirwojaiknnvtpzaxzjv.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpcndvamFpa25udnRwemF4emp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA5NjE3ODcsImV4cCI6MjA2NjUzNzc4N30.XyhklppW2bvJQ7qFv4SWaDaGK_M_YoGFAiOIFo2tW1c"
+    );
+
+    supabase
+      .channel("bagheera:new-call")
+      .on("broadcast", { event: "call-created" }, ({ payload }) => {
+        if (payload && payload.callId) {
+          console.log("🔔 new callId", payload.callId);
+          hiddenInput.value = payload.callId;
+        }
+      })
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          console.log("✅ listening for callId broadcasts");
+        }
+      });
+
+    /* ---------- start call with SINGLE assistant ---------- */
+    callBtn.onclick = () => {
+      vapi.start("51047be1-d65e-4653-9cd7-2c08acfbe3cd");
+    };
+
+    /* ---------- trigger pop-up on assistant phrase ---------- */
+    const TRIGGER_PHRASE = "please type your phone number below to confirm.";
+
+    vapi.on("message", async (msg) => {
+      if (
+        msg.type === "transcript" &&
+        msg.role === "assistant" &&
+        msg.transcriptType === "final" &&
+        typeof msg.transcript === "string" &&
+        msg.transcript.toLowerCase().includes(TRIGGER_PHRASE)
+      ) {
         openPopup();
+      }
     });
 
-    // Close form modal when user clicks the "×" button
-    const closeBagiraBtn = document.getElementById("closeBagiraModal");
-    if (closeBagiraBtn) {
-      closeBagiraBtn.addEventListener("click", closePopup);
-    }
+    /* ---------- send phone/email + callId to n8n ---------- */
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form); // includes phone, email, callId
+
+      try {
+        await fetch(
+          "https://primary-production-6b87e.up.railway.app/webhook/toolCall",
+          {
+            method: "POST",
+            body: formData
+          }
+        );
+        alert("Спасибо! Данные отправлены.");
+        closePopup();
+        form.reset();
+      } catch (err) {
+        console.error("bagiraForm submit error", err);
+        alert("Ошибка отправки. Попробуйте ещё раз.");
+      }
+    };
 
     // --- Footer and Pilot Program Modal Logic ---
     document.getElementById('currentYear').textContent = new Date().getFullYear();
