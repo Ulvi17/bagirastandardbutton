@@ -1,0 +1,13 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = true
+	ignorecase = true
+	precomposeunicode = true
+[remote "origin"]
+	url = https://github.com/Ulvi17/bagira.git
+	fetch = +refs/*:refs/*
+	mirror = true
+[remote "backup"]
+	url = https://github.com/Ulvi17/bagira-backup.git
+	fetch = +refs/heads/*:refs/remotes/backup/*
