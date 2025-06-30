@@ -570,7 +570,7 @@
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
     /* ---------- constants ---------- */
-    const API_BASE = "https://primary-production-6b87e.up.railway.app";   // your n8n instance
+    const API_BASE = "https://backendemze.dayeler.com";
     const vapi     = new Vapi("58f89212-0e94-4123-8f9e-3bc0dde56fe0");   // ← public key
 
     /* ---------- DOM helpers ---------- */
@@ -603,8 +603,24 @@
       });
 
     /* ---------- start call with SINGLE assistant ---------- */
-    callBtn.onclick = () => {
+    callBtn.onclick = async () => {
       vapi.start("51047be1-d65e-4653-9cd7-2c08acfbe3cd");
+      try {
+        const initIds = await fetch(`${API_BASE}/webhook-test/toolCall`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ping: true })
+        }).then(async r => {
+          const txt = await r.text();
+          try { return txt ? JSON.parse(txt) : {}; }
+          catch { return {}; }
+        });
+        if (initIds && initIds.callId) {
+          hiddenInput.value = initIds.callId;
+        }
+      } catch (err) {
+        console.warn("initIds fetch error", err);
+      }
     };
 
     /* ---------- trigger pop-up on assistant phrase ---------- */
@@ -629,7 +645,7 @@
 
       try {
         await fetch(
-          "https://primary-production-beta.up.railway.app/webhook/toolCall",
+          `${API_BASE}/webhook/callIntake`,
           {
             method: "POST",
             body: formData
