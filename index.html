@@ -530,7 +530,7 @@
       <div id="bagiraModalHeader" class="modal-header-title">
         Пожалуйста, укажите ваши данные для подтверждения записи.
       </div>
-      <form id="contactForm">
+      <form id="bagiraForm">
         <input type="hidden" id="callIdInput" name="callId" />
         <label for="phoneInput">Номер телефона:</label>
         <input type="tel" id="phoneInput" name="phone" required placeholder="+7 (XXX) XXX-XX-XX">
@@ -569,21 +569,39 @@
     import Vapi from "https://esm.sh/@vapi-ai/web";
 
     /* ---------- constants ---------- */
-    const API_BASE = "https://backendemze.dayeler.com";   // your n8n instance
+    const API_BASE = "https://primary-production-6b87e.up.railway.app";   // your n8n instance
     const vapi     = new Vapi("58f89212-0e94-4123-8f9e-3bc0dde56fe0");   // ← public key
 
     /* ---------- DOM helpers ---------- */
     const callBtn        = document.getElementById("vapi-button");
-    const form           = document.getElementById("contactForm");
+    const form           = document.getElementById("bagiraForm");
     const hiddenInput    = document.getElementById("callIdInput");
     const bagiraModal    = document.getElementById("bagiraFormModal");
 
     const openPopup  = () => bagiraModal.style.display = "flex";
     const closePopup = () => bagiraModal.style.display = "none";
 
+    /* ---------- Supabase Realtime: listen for call-created broadcast ---------- */
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const sb = createClient(
+      'https://wirwojaiknnvtpzaxzjv.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpcndvamFpa25udnRwemF4emp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA5NjE3ODcsImV4cCI6MjA2NjUzNzc4N30.XyhklppW2bvJQ7qFv4SWaDaGK_M_YoGFAiOIFo2tW1c'
+    );
+
+    sb.channel('bagheera:new-call')
+      .on('broadcast', { event: 'call-created' }, ({ payload }) => {
+        console.log('🔔 new callId', payload.callId);
+        hiddenInput.value = payload.callId;
+      })
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ listening for callId broadcasts');
+        }
+      });
+
     /* ---------- start call with SINGLE assistant ---------- */
     callBtn.onclick = () => {
-      hiddenInput.value = "";      // reset until Supabase broadcast arrives
       vapi.start("51047be1-d65e-4653-9cd7-2c08acfbe3cd");
     };
 
@@ -619,7 +637,7 @@
         closePopup();
         form.reset();
       } catch (err) {
-        console.error("contactForm submit error", err);
+        console.error("bagiraForm submit error", err);
         alert("Ошибка отправки. Попробуйте ещё раз.");
       }
     };
@@ -718,30 +736,6 @@
         });
     }
   </script>
-
-  <!-- ---------  BEGIN Supabase Realtime subscriber  --------- -->
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-    /*  Supabase anon credentials  */
-    const sb = createClient(
-      'https://wirwojaiknnvtpzaxzjv.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpcndvamFpa25udnRwemF4emp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA5NjE3ODcsImV4cCI6MjA2NjUzNzc4N30.XyhklppW2bvJQ7qFv4SWaDaGK_M_YoGFAiOIFo2tW1c'
-    );
-
-    /*  Listen for the broadcast fired by n8n  */
-    sb.channel('bagheera:new-call')
-      .on('broadcast', { event: 'call-created' }, ({ payload }) => {
-          console.log('🔔 new callId', payload.callId);
-          const elt = document.querySelector('#callIdInput');
-          if (elt) elt.value = payload.callId;
-      })
-      .subscribe(status => {
-          if (status === 'SUBSCRIBED')
-              console.log('✅ listening for callId broadcasts');
-      });
-  </script>
-  <!-- ----------  END Supabase subscriber  ---------- -->
 
 </body>
 </html>
