@@ -203,85 +203,36 @@
 
     /* --- CSS Configuration for the Custom Vapi Button --- */
     .vapi-button {
-      position: fixed;
-      bottom: 25px;
-      right: 25px;
-      width: 65px;
-      height: 65px;
-      background-color: var(--primary-color);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-      transition: all 0.3s ease;
-      z-index: 9999;
-      border: none;
-      outline: none;
+      position: fixed !important;
+      right: 40px !important;
+      bottom: 40px !important;
+      z-index: 99999 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+      padding: 18px 24px !important;
+      border-radius: 999px !important; /* pill */
+      background: #ffffff !important;
+      color: #002147 !important;
+      border: none !important;
+      cursor: pointer !important;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2) !important;
+      transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.1s ease;
     }
 
     .vapi-button:hover {
-      transform: scale(1.1);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25) !important;
+      transform: translateY(-2px) !important;
     }
 
-    .vapi-button .vapi-icon {
-      color: white;
-      font-size: 26px;
-      transition: opacity 0.2s ease, transform 0.2s ease;
-      position: absolute; /* Allows smooth cross-fade */
-    }
+    /* Active / loading colours */
+    .vapi-button.vapi-btn-is-active  { background:#fa0c23 !important; }
+    .vapi-button.vapi-btn-is-loading { background:#B1976B !important; box-shadow: 1px 1px 80px 20px rgb(177,151,107) !important; }
 
-    /* Idle State: Show Microphone, Hide Stop Icon */
-    .vapi-button .fa-microphone {
-      opacity: 1;
-      transform: scale(1);
-    }
-    .vapi-button .fa-phone-slash {
-      opacity: 0;
-      transform: scale(0);
-    }
-
-    /* Active State: Change color, show Stop, Hide Microphone */
-    .vapi-button.active {
-      background-color: var(--error-color);
-    }
-    .vapi-button.active .fa-microphone {
-      opacity: 0;
-      transform: scale(0);
-    }
-    .vapi-button.active .fa-phone-slash {
-      opacity: 1;
-      transform: scale(1);
-    }
-
-    /* UPDATED: CTA VAPI Section for full width band */
-    .cta-vapi-section {
-      background-color: var(--primary-darker);
-      color: white;
-      /* border-radius: 8px; /* Removed for sharp corners */
-      padding: 50px 0; /* Increased padding, 0 for horizontal to let container handle it */
-      margin-top: 0;    /* Removed */
-      margin-bottom: 0; /* Removed */
-      width: 100%; /* Ensure it spans full width */
-    }
-    .cta-vapi-section .container { /* Ensure container inside still constrains content */
-        max-width: 1024px; /* Or your desired content width */
-        margin: 0 auto;
-        padding: 0 15px; /* Keep horizontal padding for content */
-    }
-    .cta-vapi-section h3 {
-      font-size: 1.8rem; /* Slightly larger */
-      margin-bottom: 15px; /* Adjusted */
-      font-weight: 600;
-      color: white;
-    }
-    .cta-vapi-section p {
-        color: rgba(255,255,255,0.9);
-        margin-bottom: 0;
-        font-size: 1.1rem; /* Slightly larger */
-    }
+    /* Inner elements from new pill layout */
+    #vapi-icon-container { display:flex; }
+    #vapi-title   { font-family: 'Inter', sans-serif !important; font-size: 1em !important; font-weight:800 !important; line-height:1; }
+    #vapi-subtitle{ font-family: 'Inter', sans-serif !important; font-size: 0.8em !important; line-height:1; }
 
     footer.page-footer {
       background-color: var(--text-color-dark);
@@ -511,9 +462,14 @@
     </section>
   </main>
 
-  <button id="vapi-button" class="vapi-button" aria-label="Start Voice Assistant">
-    <i class="fas fa-microphone vapi-icon"></i>
-    <i class="fas fa-phone-slash vapi-icon"></i>
+  <button id="vapi-button" class="vapi-button" aria-label="Speak with Bagira AI">
+    <div id="vapi-icon-container">
+      <img src="https://unpkg.com/lucide-static@0.321.0/icons/mic.svg" alt="Mic" width="24" height="24">
+    </div>
+    <div>
+      <div id="vapi-title">Speak with Bagira&nbsp;AI</div>
+      <div id="vapi-subtitle">AI&nbsp;Voice&nbsp;Assistant</div>
+    </div>
   </button>
 
   <footer class="page-footer">
@@ -602,7 +558,7 @@
 
     /* ---------- start call with SINGLE assistant ---------- */
     callBtn.onclick = () => {
-      vapi.start("51047be1-d65e-4653-9cd7-2c08acfbe3cd");
+      vapi.start("541e48cf-1f4a-423b-875f-889c6917a56d");
     };
 
     /* ---------- trigger pop-up on assistant phrase ---------- */
