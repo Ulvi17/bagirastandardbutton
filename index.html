@@ -420,6 +420,24 @@
         .container { width: 95%; }
         .info-grid { grid-template-columns: 1fr; }
     }
+    /* ----------------- NEW: VAPI button label & loading styles ----------------- */
+    .vapi-button.loading {
+      pointer-events: none; /* disable clicks while loading */
+      opacity: 0.6;         /* visual feedback */
+    }
+
+    .vapi-btn-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 0.65rem;
+      font-weight: 600;
+      white-space: nowrap;
+      pointer-events: none;
+      user-select: none;
+    }
   </style>
 </head>
 <body>
@@ -512,6 +530,7 @@
   </main>
 
   <button id="vapi-button" class="vapi-button" aria-label="Start Voice Assistant">
+    <span class="vapi-btn-label">EMZE AI</span>
     <i class="fas fa-microphone vapi-icon"></i>
     <i class="fas fa-phone-slash vapi-icon"></i>
   </button>
@@ -602,8 +621,26 @@
 
     /* ---------- start call with SQUAD ---------- */
     callBtn.onclick = () => {
-      vapi.start(undefined, undefined, "541e48cf-1f4a-423b-875f-889c6917a56d");
+      if (callBtn.classList.contains("loading")) return; // prevent double-clicks
+
+      callBtn.classList.add("loading");
+
+      vapi
+        .start(undefined, undefined, "541e48cf-1f4a-423b-875f-889c6917a56d")
+        .catch((err) => {
+          console.error("Error starting call:", err);
+          callBtn.classList.remove("loading");
+        });
     };
+
+    /* Remove loading state when call actually starts or if an error event arrives */
+    vapi.on("call-start", () => {
+      callBtn.classList.remove("loading");
+    });
+
+    vapi.on("error", () => {
+      callBtn.classList.remove("loading");
+    });
 
     /* ---------- trigger pop-up on assistant phrase ---------- */
     const TRIGGER_PHRASE = "please type your phone number below to confirm.";
