@@ -233,23 +233,16 @@
       position: absolute; /* Allows smooth cross-fade */
     }
 
-    /* Idle State: Show Microphone, Hide Stop Icon */
-    .vapi-button .fa-microphone {
-      opacity: 1;
-      transform: scale(1);
-    }
+    /* Idle: hide phone icon */
     .vapi-button .fa-phone-slash {
       opacity: 0;
       transform: scale(0);
+      transition: opacity 0.2s ease, transform 0.2s ease;
     }
 
-    /* Active State: Change color, show Stop, Hide Microphone */
+    /* Active (call in progress): red button + show phone icon */
     .vapi-button.active {
       background-color: var(--error-color);
-    }
-    .vapi-button.active .fa-microphone {
-      opacity: 0;
-      transform: scale(0);
     }
     .vapi-button.active .fa-phone-slash {
       opacity: 1;
@@ -531,7 +524,6 @@
 
   <button id="vapi-button" class="vapi-button" aria-label="Start Voice Assistant">
     <span class="vapi-btn-label">EMZE AI</span>
-    <i class="fas fa-microphone vapi-icon"></i>
     <i class="fas fa-phone-slash vapi-icon"></i>
   </button>
 
@@ -619,10 +611,20 @@
         }
       });
 
-    /* ---------- start call with SQUAD ---------- */
-    callBtn.onclick = () => {
-      if (callBtn.classList.contains("loading")) return; // prevent double-clicks
+    /* ---------- start or stop call depending on state ---------- */
+    const label = callBtn.querySelector('.vapi-btn-label');
 
+    callBtn.onclick = () => {
+      if (callBtn.classList.contains("loading")) return; // prevent double-clicks while loading
+
+      // If a call is active, stop it
+      if (callBtn.classList.contains("active")) {
+        vapi.stop();
+        callBtn.classList.add("loading"); // show brief loading until call-end event
+        return;
+      }
+
+      // Otherwise, start a new call
       callBtn.classList.add("loading");
 
       vapi
@@ -633,13 +635,22 @@
         });
     };
 
-    /* Remove loading state when call actually starts or if an error event arrives */
+    /* ---- Event listeners to update UI state ---- */
     vapi.on("call-start", () => {
       callBtn.classList.remove("loading");
+      callBtn.classList.add("active");
+      if (label) label.textContent = "Hang Up";
     });
 
+    vapi.on("call-end", () => {
+      callBtn.classList.remove("loading", "active");
+      if (label) label.textContent = "EMZE AI";
+    });
+
+    // On error before call starts / during call
     vapi.on("error", () => {
-      callBtn.classList.remove("loading");
+      callBtn.classList.remove("loading", "active");
+      if (label) label.textContent = "EMZE AI";
     });
 
     /* ---------- trigger pop-up on assistant phrase ---------- */
