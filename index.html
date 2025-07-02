@@ -208,7 +208,7 @@
       right: 25px;
       width: 65px;
       height: 65px;
-      background-color: var(--primary-color);
+      background-color: #b1976b; /* updated idle colour */
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -424,7 +424,7 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      color: white;
+      color: #002147; /* updated text colour */
       font-size: 0.65rem;
       font-weight: 600;
       white-space: nowrap;
@@ -639,18 +639,24 @@
     vapi.on("call-start", () => {
       callBtn.classList.remove("loading");
       callBtn.classList.add("active");
-      if (label) label.textContent = "Hang Up";
+      if (label) label.style.display = "none";
     });
 
     vapi.on("call-end", () => {
       callBtn.classList.remove("loading", "active");
-      if (label) label.textContent = "EMZE AI";
+      if (label) {
+        label.textContent = "EMZE AI";
+        label.style.display = "inline";
+      }
     });
 
     // On error before call starts / during call
     vapi.on("error", () => {
       callBtn.classList.remove("loading", "active");
-      if (label) label.textContent = "EMZE AI";
+      if (label) {
+        label.textContent = "EMZE AI";
+        label.style.display = "inline";
+      }
     });
 
     /* ---------- trigger pop-up on assistant phrase ---------- */
